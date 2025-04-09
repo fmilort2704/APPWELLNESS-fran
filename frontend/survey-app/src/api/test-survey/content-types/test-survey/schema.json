@@ -1,0 +1,26 @@
+{
+  "kind": "collectionType",
+  "collectionName": "test_surveys",
+  "info": {
+    "singularName": "test-survey",
+    "pluralName": "test-surveys",
+    "displayName": "Survey"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "question": {
+      "type": "text"
+    },
+    "a": {
+      "type": "string"
+    },
+    "b": {
+      "type": "string"
+    },
+    "c": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,46 @@
+
+
+.HeaderBody {
+    width: 100vw;
+    max-width: 1240px;
+    margin: auto;
+    padding: 16px 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    /* color: white; */
+}
+
+.HeaderBody h1{
+    font-family: Raleway, sans-serif;
+    font-size: 64px;
+    line-height: 1em;
+    padding-bottom: 12px;
+}
+
+.HeaderBody-Right {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    font-size: 64px;
+    gap: 8px
+}
+
+.HeaderFont{
+    font-family: Raleway, sans-serif;
+    font-weight: 500;
+    font-size: 1em;
+    line-height: 1em;
+    margin: 0;
+}
+
+
+.badge {
+    height: 84px;
+    width: 84px;
+    display: flex;
+    margin-right: 50px;
+    color: black;
+  }

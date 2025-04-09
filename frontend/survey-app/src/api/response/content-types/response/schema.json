@@ -1,0 +1,23 @@
+{
+  "kind": "collectionType",
+  "collectionName": "responses",
+  "info": {
+    "singularName": "response",
+    "pluralName": "responses",
+    "displayName": "response"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "Email": {
+      "type": "text"
+    },
+    "surveyQuestion": {
+      "type": "text"
+    },
+    "surveyResponse": {
+      "type": "text"
+    }
+  }
+}

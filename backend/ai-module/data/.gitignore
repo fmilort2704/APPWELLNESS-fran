@@ -1,0 +1,6 @@
+*
+!.gitignore
+!client_data/
+!client_data/cleaned/
+!client_data/cleaned/fitbit/
+!client_data/cleaned/fitbit/*

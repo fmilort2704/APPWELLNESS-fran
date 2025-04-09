@@ -1,0 +1,95 @@
+.PatTab {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.PatTab-Search {
+    width: 80%;
+    font-family: Raleway, sans-serif;
+    font-weight: 500;
+    color: #282c34;
+    margin:auto;
+}
+
+.PatTab-SearchSelect {
+    background-color: #99B7BA;
+    font-family: Raleway, sans-serif;
+    font-weight: 500;
+    color: #282c34;
+    padding: 10px;
+    font-size: 30px;
+    border-color: transparent;
+    border-radius: 15px 0px 0px 15px;
+    float: left;
+}
+
+.PatTab-SearchSelect option {
+    color: #282c34;
+    font-family: Raleway, sans-serif;
+    font-weight: 500;
+    font-size: 24px;
+}
+
+.PatTab-SearchText {
+    background-color: #99B7BA;
+    font-family: Raleway, sans-serif;
+    font-weight: 500;
+    color: #282c34;
+    width: 100%;
+    border-radius: 0px 15px 15px 0px;
+    border-color: transparent;
+    /* border-left: transparent; */
+    padding: 10px;
+    font-size: 30px;
+}
+
+span {
+    display: block;
+    overflow: hidden;
+}
+
+.PatTab table {
+    width: 100%;
+    border-spacing: 0;
+    border-radius: 10px;
+}
+/* 
+.PatTab-Header th{
+    padding: 0.2em 0;
+    font-family: Raleway, sans-serif;
+    color: #fff;
+    font-weight: 700;
+} */
+
+.PatTab-Body {
+    font-family: Raleway, sans-serif;
+    font-weight: 500;
+}
+
+.PatTab-Body td {
+    padding: 0.2em 0;
+    text-align: center;
+}
+
+.PatTab-Footer {
+    height: 10px;
+}
+
+/* 
+.PatTab-Body tr:nth-child(odd) {
+    background-color: #f5f5f5;
+}
+
+.PatTab-Body tr:nth-child(even) {
+    background-color: #cddee1;
+} */
+
+.PatTab-Button {
+    background-color: transparent;
+    border: none;
+    /* color: #282c34; */
+    font-size: 24px;
+    cursor: pointer;
+}

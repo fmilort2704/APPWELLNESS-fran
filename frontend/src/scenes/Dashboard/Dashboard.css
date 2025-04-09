@@ -1,0 +1,177 @@
+.Dashboard {
+    text-align: center;
+    align-content: center;
+    min-height: 100vh;
+    /* max-height: 100vh; */
+
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+
+}
+
+.Dashboard-Body {
+    display: flex;
+    flex-direction: column;
+    font-size: 24px;
+    overflow: hidden;
+    align-content: flex-start;
+    margin: auto;
+    margin-right: 0vw;
+    gap: 20px;
+    padding-top: 0.5em;
+    flex-grow: 1;
+    width: 75vw;
+    max-width: 75vw;
+}
+
+.cardRow {
+    padding: 0.75em;
+    display: grid;
+    flex-direction: row;
+    justify-content: space-evenly;
+    gap: 1em;
+    overflow-y: hidden;
+    background-color: transparent;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin: 0 auto;
+    overflow-x: auto;
+}
+
+
+.DataFilterModeForm {
+    font-family: Raleway, sans-serif;
+    font-weight: 500;
+    font-size: 40px;
+    align-self: flex-start;
+    width: 100%;
+    text-align: left;
+    margin-bottom: 24px;
+}
+
+.DataFilterModeForm select{
+    font-family: Raleway, sans-serif;
+    font-weight: 500;
+    font-size: 40px;
+    background-color: whitesmoke;
+    border: none;
+    margin-right: 0.5em;
+    cursor: pointer;
+    color: #282c34;
+}
+
+.DataFilterModeForm option {
+    color: #282c34;
+    background-color: #BCD2D5;
+    font-size: 24px;
+}
+
+.Breakdown {
+    font-family: 'Palanquin Dark', sans-serif;
+    height: 100%;
+    display: flex;
+    margin: 0 auto;
+    justify-content: space-around;
+    padding: 0.5em;
+    border-radius: 0.2vw;
+    gap: 0.5vw;
+    
+
+}
+
+.Breakdown-Graph {
+    width: 70%;
+    height: 1000%;
+    padding: 16px;
+    border-radius: 1vw;
+}
+
+.Breakdown-Cards {
+    width: 30%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    justify-content: flex-start;
+    overflow-y: auto;
+}
+
+.Dashboard-Body h1 {
+    font-family: Raleway, sans-serif;
+    text-align: left;
+    font-weight: 500;
+    margin-bottom: 24px;
+}
+
+.badge {
+    height: 84px;
+    width: 84px;
+    display: flex;
+    margin-right: 0em;
+    color: black;
+  }
+
+  .toggle-container {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 200px;
+    height: 30px;
+    border-radius: 15px;
+    overflow: hidden;
+    cursor: pointer;
+    background-color: #000000;
+  }
+
+  .toggle {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 50%;
+    height: 27px;
+    background-color: #ffffff;
+    border-radius: 18px;
+    transition: transform 0.3s ease;
+  }
+
+  .toggle-label {
+    z-index: 1;
+    flex: 1;
+    text-align: center;
+    color: #fff;
+    line-height: 40px;
+    user-select: none;
+    font-size: 20px;
+  }
+
+  .toggle-label.active {
+    color: #ffffff;
+  }
+
+  .toggle-main {
+    color: #000000;
+  }
+
+  .patient-table {
+    margin-top: 20px;
+    border: 1px solid #ddd;
+    padding: 10px;
+  }
+  
+  .patient-table table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .patient-table th, .patient-table td {
+    padding: 8px;
+    text-align: left;
+    border: 1px solid #ddd;
+  }
+  
+  .patient-table th {
+    background-color: #f4f4f4;
+  }
+  

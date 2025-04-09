@@ -1,0 +1,104 @@
+.PatientCard {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    margin: auto;
+}
+
+.PatientCardRowHeader {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.CardRow {
+    /* Meta */
+    display: flex;
+    flex-direction: row;
+
+    /* Self Positioning */
+    justify-self: center;
+    max-width: 100%;
+    margin: 0 auto;
+
+    /* Child Positioning */
+    gap: 1em;
+    padding: 0.75em;
+    justify-content: flex-start;
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    /* Appearance */
+    background-color: #9CB7BB;
+    border-radius: calc(25px + 0.75em);
+}
+
+/*.cardRow {*/
+/*    width: 85%;*/
+/*    padding: 0.75em;*/
+/*    display: grid;*/
+/*    justify-content: center;*/
+/*    background-color: #99B7BA; */
+/*    gap: 1em;*/
+/*    !* grid-auto-flow: column; *!*/
+
+/*    grid-template-columns: repeat(4, minmax(0, 1fr));*/
+/*    height: 15vh;*/
+/*    margin: 0 auto;*/
+/*    !* align-items: center; *!*/
+/*    !* width: 100%; *!*/
+/*    !* height: 60px; *!*/
+/*    flex-direction: row;*/
+/*    overflow-x: auto; */
+/*    !* overflow-y: auto; *!*/
+/*}*/
+
+.PatCard {
+    min-width: 300px;
+    height: 155px;
+    border-radius:25px;
+    text-align: left;
+    padding: 0 50px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    box-shadow: -4px 4px rgba(0, 0, 0, 0.1);
+    border: none;
+    cursor: pointer;
+    overflow: auto;
+    margin: auto;
+}
+
+.PatCard-Text {
+    margin: auto 0;
+    flex: 1;
+    /* color: #fff; */
+}
+
+.PatCard-Icon {
+    margin: auto 0;
+    color: #282c34;
+}
+
+.PatCard h1 {
+    font-family: Raleway, sans-serif;
+    font-weight: 600;
+    font-size: "2em";
+    margin: 0;
+    line-height: 1em;
+}
+
+.PatCard hr {
+    margin: 12px 0;
+    width: 100%;
+}
+
+.PatCard h2 {
+    font-family: Raleway, sans-serif;
+    font-weight: 500;
+    line-height: 1em;
+    font-size: 16pt;
+    margin: 0;
+}
