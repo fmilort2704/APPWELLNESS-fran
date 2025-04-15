@@ -58,6 +58,8 @@ import ReactLoading from "react-loading";
 import { BadgePopup } from "../../components/PatientBadge/BagdePopup";
 import BadgeIcon from "../../components/PatientBadge/BadgeIcon";
 import Papa from 'papaparse';
+import SurveyGraph from "../../components/Graph/surveyGraph";
+import PatientList from "../../components/Graph/PatientList";
 
 /**
  * 
@@ -85,6 +87,9 @@ function DashboardBody({
   const [publicData, setPublicData] = useState(false);
   const [diabetesData, setDiabetesData] = useState(false);
   const [isMainActive, setIsMainActive] = useState(true);
+  const [isGlucoseActive, setIsGucoseActive] = useState(false);
+  const [isSurveyActive, setIsSurveyActive] = useState(false);
+
   // Handler to update state when ToggleSwitch changes
   const handleToggleSwitch = (value) => {
     console.log(value);
@@ -529,11 +534,27 @@ function DashboardBody({
   function ToggleSwitch({ isMainActive, isGlucoseActive, isSurveysActive, onToggle }) {
     const [activeIndex, setActiveIndex] = useState(0);
     const [importDataAlert, setImportDataAlert] = useState(false);
-    const [patientsAlert, setPatientsAlert] = useState(false)
+    const [patientsAlert, setPatientsAlert] = useState(false);
 
     const handleClick = (index) => {
-      onToggle(!isMainActive);
-      setActiveIndex(index)
+      setActiveIndex(index);
+      if (index === 0) {
+        onToggle(true, false, false);
+        setIsMainActive(true);
+        setIsGucoseActive(false);
+        setIsSurveyActive(false);
+      } else if (index === 1) {
+        onToggle(false, true, false);
+        setIsGucoseActive(true);
+        setIsMainActive(false);
+        setIsSurveyActive(false);
+      } else if (index === 2) {
+        onToggle(false, false, true);
+        setIsSurveyActive(true);
+        setIsMainActive(false);
+        setIsGucoseActive(false);
+      }
+      console.log(index);
     };
 
     const exportData = () => {
@@ -559,7 +580,6 @@ function DashboardBody({
       <>
         <div
           className="toggle-container"
-          onClick={handleClick}
           style={{
             position: 'relative',
             display: 'flex',
@@ -578,14 +598,14 @@ function DashboardBody({
             style={{
               position: 'absolute',
               top: '2px',
-              width: '48.5%',
+              width: '33%',
               height: '27px',
               borderRadius: '18px',
               backgroundColor: 'white',
-              transform: isMainActive ? 'translateX(0)' : 'translateX(100px)',
+              transform: `translateX(${activeIndex * 100}px)`,
               transition: 'transform 0.3s ease',
             }}
-          ></div>
+          >{activeIndex}</div>
           <div
             className="toggle-label"
             style={{
@@ -593,8 +613,9 @@ function DashboardBody({
               width: '33%',
               textAlign: 'center',
               lineHeight: '40px',
-              color: isMainActive ? 'black' : 'white',
+              color: activeIndex === 0 ? 'black' : 'white',
             }}
+            onClick={() => handleClick(0)}
           >
             Home
           </div>
@@ -602,11 +623,12 @@ function DashboardBody({
             className="toggle-label"
             style={{
               zIndex: 1,
-              width: '50%',
+              width: '33%',
               textAlign: 'center',
               lineHeight: '40px',
-              color: !isMainActive ? 'black' : 'white',
+              color: activeIndex === 1 ? 'black' : 'white',
             }}
+            onClick={() => handleClick(1)}
           >
             Glucose
           </div>
@@ -614,13 +636,14 @@ function DashboardBody({
             className="toggle-label"
             style={{
               zIndex: 1,
-              width: '50%',
+              width: '33%',
               textAlign: 'center',
               lineHeight: '40px',
-              color: !isMainActive ? 'black' : 'white',
+              color: activeIndex === 2 ? 'black' : 'white',
             }}
+            onClick={() => handleClick(2)}
           >
-            data
+            Surveys
           </div>
         </div>
 
@@ -870,105 +893,115 @@ function DashboardBody({
               {/* Breakdown */}
             </div>
 
-            {
-              isMainActive ? (
 
-                <BreakdownCardHolder>
-                  <div className={"Breakdown"}>
-                    <GraphCard>
-                      <Graph
-                        filterMode={filterMode} //make this change
-                        scale="days"
-                        theme={selectedTheme}
-                        userID={userID}
-                        goals={graphGoals}
-                        prediction={predictions[filterMode]}
-                        publicData={publicData}
+            {isMainActive ? (
+              <BreakdownCardHolder>
+                <div className={"Breakdown"}>
+                  <GraphCard>
+                    <Graph
+                      filterMode={filterMode} // Main content filter
+                      scale="days"
+                      theme={selectedTheme}
+                      userID={userID}
+                      goals={graphGoals}
+                      prediction={predictions[filterMode]}
+                      publicData={publicData}
+                    />
+                  </GraphCard>
+                  <div
+                    style={{
+                      position: "relative",
+                      overflow: "auto",
+                      width: "30%",
+                    }}
+                  >
+                    <StatsBox>
+                      <RecommendationsCard
+                        recommendation={recommendations.heartRateTargetZones}
+                        maxHeartRateMonthAv={userData.avMaxHr}
+                        predictions={predictions}
+                        selectedTheme={selectedTheme}
                       />
-                    </GraphCard>
-                    <div
-                      style={{
-                        position: "relative",
-                        overflow: "auto",
-                        width: "30%",
-                      }}
-                    >
-                      <StatsBox>
-                        {/*<GoalCard goalData={getGoal(filterMode)} />*/}
-                        {/*<KeyStatsCard name={filterMode} />*/}
-                        <RecommendationsCard
-                          recommendation={recommendations.heartRateTargetZones}
-                          maxHeartRateMonthAv={userData.avMaxHr}
-                          predictions={predictions}
-                          selectedTheme={selectedTheme}
-                        />
-                        <RecommendationsCard
-                          recommendation={recommendations.stepsRecommendation}
-                          goalData={goals.stepsGoal}
-                          predictions={predictions}
-                          selectedTheme={selectedTheme}
-                        />
-                        <RecommendationsCard
-                          recommendation={recommendations.intensitryRecommendation}
-                          goalData={goals.intensityGoal}
-                          predictions={predictions}
-                          selectedTheme={selectedTheme}
-                        />
-                        <RecommendationsCard
-                          recommendation={recommendations.sleepRecommendation}
-                          goalData={goals.sleepGoal}
-                          predictions={predictions}
-                          selectedTheme={selectedTheme}
-                        />
-                        <RecommendationsCard
-                          recommendation={recommendations.caloriesRecommendation}
-                          goalData={goals.caloriesGoal}
-                          predictions={predictions}
-                          selectedTheme={selectedTheme}
-                        />
-                      </StatsBox>
-                    </div>
-                  </div>
-                </BreakdownCardHolder>
-              ) : (
-                <BreakdownCardHolder>
-                  <div className={"Breakdown"}>
-                    <GraphCard>
-                      <Graph
-                        filterMode="Glucose" // Just glucose for diabetes section
-                        scale="days"
-                        theme={selectedTheme}
-                        userID={userID}
-                        goals={graphGoals}
-                        prediction={predictions[filterMode]}
-                        publicData={publicData}
+                      <RecommendationsCard
+                        recommendation={recommendations.stepsRecommendation}
+                        goalData={goals.stepsGoal}
+                        predictions={predictions}
+                        selectedTheme={selectedTheme}
                       />
-                    </GraphCard>
-                    <div
-                      style={{
-                        position: "relative",
-                        overflow: "auto",
-                        width: "30%",
-                      }}
-                    >
-                      <StatsBox>
-                        <GoalCard
-                          goalData={goals.glucoseValue}
-                          goals={goals}
-                          type={"last"}
-                        />
-                        {/* <RecommendationsCard
-                      recommendation={recommendations.caloriesRecommendation}
-                      goalData={goals.caloriesGoal}
-                      predictions={predictions}
-                      selectedTheme={selectedTheme}
-                    /> */}
-                      </StatsBox>
-                    </div>
+                      <RecommendationsCard
+                        recommendation={recommendations.intensitryRecommendation}
+                        goalData={goals.intensityGoal}
+                        predictions={predictions}
+                        selectedTheme={selectedTheme}
+                      />
+                      <RecommendationsCard
+                        recommendation={recommendations.sleepRecommendation}
+                        goalData={goals.sleepGoal}
+                        predictions={predictions}
+                        selectedTheme={selectedTheme}
+                      />
+                      <RecommendationsCard
+                        recommendation={recommendations.caloriesRecommendation}
+                        goalData={goals.caloriesGoal}
+                        predictions={predictions}
+                        selectedTheme={selectedTheme}
+                      />
+                    </StatsBox>
                   </div>
-                </BreakdownCardHolder>
-              )
-            }
+                </div>
+              </BreakdownCardHolder>
+            ) : isGlucoseActive ? (
+              <BreakdownCardHolder>
+                <div className={"Breakdown"}>
+                  <GraphCard>
+                    <Graph
+                      filterMode="Glucose" // Glucose-specific filter
+                      scale="days"
+                      theme={selectedTheme}
+                      userID={userID}
+                      goals={graphGoals}
+                      prediction={predictions[filterMode]}
+                      publicData={publicData}
+                    />
+                  </GraphCard>
+                  <div
+                    style={{
+                      position: "relative",
+                      overflow: "auto",
+                      width: "30%",
+                    }}
+                  >
+                    <StatsBox>
+                      <GoalCard
+                        goalData={goals.glucoseValue}
+                        goals={goals}
+                        type={"last"}
+                      />
+                    </StatsBox>
+                  </div>
+                </div>
+              </BreakdownCardHolder>
+            ) : isSurveyActive ? (
+              <BreakdownCardHolder>
+                <div className={"Breakdown"}>
+                  <GraphCard>
+                    <SurveyGraph patientId={10}/>
+                  </GraphCard>
+
+                  <div
+                    style={{
+                      position: "relative",
+                      overflow: "auto",
+                      width: "30%",
+                    }}
+                  >
+                    <StatsBox>
+                      <PatientList clinicianId={localStorage.getItem("clinicianId")} />
+                    </StatsBox>
+                  </div>
+                </div>
+              </BreakdownCardHolder>
+            ) : null}
           </div>
         </div>
         <div style={{ width: "12.5vw", paddingTop: "3vh" }}>
@@ -1253,6 +1286,7 @@ export const Dashboard = () => {
           navigateReturn={navigateReturn}
           selectedTheme={selectedTheme}
           setSelectedTheme={setSelectedTheme}
+          activeIndex={2}
         />
         <DashboardBody
           filterMode={filterMode}

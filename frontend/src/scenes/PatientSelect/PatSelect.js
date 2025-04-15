@@ -664,7 +664,9 @@ export function PatSelect() {
       const apiUrl = `${preUrl}/api/ap_user_ids`;
   
       console.log(`[INFO] Fetching data for user ID: ${id}`);
-  
+      
+      localStorage.setItem("patientId", id);
+
       const response = await Axios.get(apiUrl);
   
       console.log("[INFO] Fetched Data:", response.data);

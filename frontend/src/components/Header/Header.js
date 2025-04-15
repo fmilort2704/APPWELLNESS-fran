@@ -95,6 +95,7 @@ export function Header({
   selectedTheme,
   setSelectedTheme,
   institutionName,
+  activeIndex,
 }) {
   const [userData, setUserData] = useState([]);
   const location = useLocation();
@@ -118,6 +119,7 @@ export function Header({
     localStorage.removeItem("firstName");
     localStorage.removeItem("lastName");
     localStorage.removeItem("institutionId");
+    localStorage.removeItem("patientId");
     navigate("/");
   };
 
@@ -128,11 +130,15 @@ export function Header({
           let params = {
             id: location.state.id,
           };
-
+          console.log(activeIndex)
           const apiUrl =
-            process.env.NODE_ENV === "production"
+          activeIndex !== 2
+            ? process.env.NODE_ENV === "production"
               ? `/api/all_ap_user_data`
-              : `http://localhost:5001/api/all_ap_user_data`;
+              : `http://localhost:5001/api/all_ap_user_data`
+            : process.env.NODE_ENV === "production"
+            ? `/api/patients/${localStorage.getItem("patientId")}/answers_14_days`
+            : `http://localhost:5001/api/patients/${localStorage.getItem("patientId")}/answers_14_days`;
 
           const [userDataResponse] = await Promise.all([
             Axios.get(apiUrl, { params }),
@@ -153,37 +159,26 @@ export function Header({
   }, [name, setSelectedTheme]);
 
   function DownloadJSON() {
+    console.log(userData[0])
     downloadFile({
       data: JSON.stringify(userData),
-      fileName: "user_id_" + userData[0].user_id + "'s_data.json",
+      fileName: activeIndex === 2
+      ? "survey_user_id_" + userData[0].user_id + "'s_data.json"
+      : "user_id_" + userData[0].user_id + "'s_data.json",
       fileType: "text/json",
     });
   }
 
   function DownloadCSV() {
-    let headers = [
-      "user_id,sleep_target,sleep_value,steps,calories_target,calories_value,intensity,min_heart_rate,max_heart_rate,data_created_at,data_updated_at,data_created_by_id,data_updated_by_id,daily_step_goal",
-    ];
-    // Convert users data to a csv
-    let usersCsv = userData.reduce((acc, user) => {
-      const {
-        user_id,
-        sleep_target,
-        sleep_value,
-        steps,
-        calories_target,
-        calories_value,
-        intensity,
-        min_heart_rate,
-        max_heart_rate,
-        data_created_at,
-        data_updated_at,
-        data_created_by_id,
-        data_updated_by_id,
-        daily_step_goal,
-      } = user;
-      acc.push(
-        [
+    let headers, usersCsv;
+  
+    if (activeIndex !== 2) {
+      headers = [
+        "user_id,sleep_target,sleep_value,steps,calories_target,calories_value,intensity,min_heart_rate,max_heart_rate,data_created_at,data_updated_at,data_created_by_id,data_updated_by_id,daily_step_goal",
+      ];
+  
+      usersCsv = userData.reduce((acc, user) => {
+        const {
           user_id,
           sleep_target,
           sleep_value,
@@ -198,13 +193,41 @@ export function Header({
           data_created_by_id,
           data_updated_by_id,
           daily_step_goal,
-        ].join(",")
-      );
-      return acc;
-    }, []);
+        } = user;
+        acc.push(
+          [
+            user_id,
+            sleep_target,
+            sleep_value,
+            steps,
+            calories_target,
+            calories_value,
+            intensity,
+            min_heart_rate,
+            max_heart_rate,
+            data_created_at,
+            data_updated_at,
+            data_created_by_id,
+            data_updated_by_id,
+            daily_step_goal,
+          ].join(",")
+        );
+        return acc;
+      }, []);
+    } else {
+      headers = ["user_id,id,question,answer"];
+      usersCsv = userData.reduce((acc, user) => {
+        const { user_id, id, question, answer } = user;
+        acc.push([user_id, id, question, answer].join(","));
+        return acc;
+      }, []);
+    }
     downloadFile({
       data: [...headers, ...usersCsv].join("\n"),
-      fileName: "user_id_" + userData[0].user_id + "'s_data.csv",
+      fileName:
+        activeIndex === 2
+          ? `survey_user_id_${userData[0].user_id}_answers.csv`
+          : `user_id_${userData[0].user_id}_data.csv`,
       fileType: "text/csv",
     });
   }

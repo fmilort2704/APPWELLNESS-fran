@@ -6,6 +6,14 @@ const csvParser = require("csv-parser");
 const { Pool } = require("pg");
 const { ConnectingAirportsOutlined } = require("@mui/icons-material");
 
+const pool = new Pool({
+  user: "postgres",
+  host: "localhost", 
+  database: "copia_active",
+  password: "veloz3000", 
+  port: 5432, 
+});
+
 require("dotenv").config();
 
 // creates an ExpressJS app api to communicate the db data to the frontend
@@ -182,6 +190,199 @@ join up_users on up_users.id = garmin_daily_datas_user_links.user_id where up_us
   }
 });
 
+app.get("/api/survey", async (req, res) => {
+  try {
+    const query = `
+      SELECT DISTINCT ON (question) id, question, is_reaction_question
+FROM public.components_survey_answers
+ORDER BY question, id ASC;
+    `;
+
+    const result = await db.query(query);
+    console.log("Query result:", result.rows);
+
+    res.json(result.rows);
+  } catch (e) {
+    console.error('Error getting the questions', e);
+    res.status(500).json({ error: "Error getting the questions" })
+  }
+});
+
+app.get("/api/patients/:patientId/answers", async (req, res) => {
+  const patientId = req.params.patientId;
+
+  try {
+    const result = await pool.query(`
+      SELECT 
+    csa.question,
+    caa.answer
+FROM 
+    public.components_answer_answers caa
+JOIN 
+    public.components_survey_answers csa ON caa.question_id = csa.id
+JOIN 
+    public.answers_user_links aul ON caa.id = aul.answer_id
+WHERE 
+    aul.user_id = $1
+ORDER BY csa.id desc 
+LIMIT 3;
+    `, [patientId]);
+
+    console.log("Query result: " + result.rows);
+
+    res.json(result.rows)
+  } catch (e) {
+    console.error("Error getting the answers: ", e)
+    res.status(500).json({ error: "Error getting the users of a clinician" })
+  }
+});
+
+app.get("/api/patients/:patientId/answers_14_days", async (req, res) => {
+  const patientId = req.params.patientId;
+
+  console.log("Solicitud recibida en /api/patients/:patientId/answers_14_days");
+  try {
+    const result = await pool.query(`
+      SELECT 
+    aul.user_id,
+    csa.id,
+    csa.question,
+    caa.answer
+FROM 
+    public.components_answer_answers caa
+JOIN 
+    public.components_survey_answers csa ON caa.question_id = csa.id
+JOIN 
+    public.answers_user_links aul ON caa.id = aul.answer_id
+JOIN 
+    public.answers a ON caa.id = a.id
+WHERE 
+    aul.user_id = $1
+ORDER BY 
+    csa.id ASC
+    `, [patientId]);
+
+    console.log("Query result 14 dias: " + result.rows);
+
+    res.json(result.rows)
+  } catch (e) {
+    console.error("Error getting the last 14 answers: ", e)
+    res.status(500).json({ error: "Error getting the last 14 answers" })
+  }
+});
+
+app.get("/api/patients/:patientId/:surveyId/answers_14_days", async (req, res) => {
+  const patientId = req.params.patientId;
+  const surveyId = req.params.surveyId;
+
+  console.log("Solicitud recibida en /api/patients/:patientId/answers_14_days");
+  try {
+    const result = await pool.query(`
+      SELECT
+	csal.survey_id,
+	s.title,
+    csa.id,
+    csa.question,
+    caa.answer
+FROM 
+    public.components_answer_answers caa
+JOIN 
+    public.components_survey_answers csa ON caa.question_id = csa.id
+JOIN 
+    public.answers_user_links aul ON caa.id = aul.answer_id
+JOIN 
+    public.answers a ON caa.id = a.id
+JOIN
+	public.component_survey_answer_link csal on csal.question_id = csa.id
+JOIN
+	public.surveys s on s.id = csal.survey_id
+WHERE 
+    aul.user_id = $1 AND csal.survey_id = $2
+ORDER BY 
+    csa.id ASC
+    `, [patientId, surveyId]);
+
+    console.log("Query result 14 dias: " + result.rows);
+
+    res.json(result.rows)
+  } catch (e) {
+    console.error("Error getting the last 14 answers: ", e)
+    res.status(500).json({ error: "Error getting the last 14 answers" })
+  }
+});
+
+app.get("/api/question_options/:patientId", async (req, res) => {
+  const patientId = req.params.patientId;
+
+  try {
+    const result = await pool.query(`
+      SELECT DISTINCT ON (caa.answer)
+    csa.id,
+    csa.question,
+    caa.answer
+FROM 
+    public.components_answer_answers caa
+JOIN 
+    public.components_survey_answers csa ON caa.question_id = csa.id
+JOIN 
+    public.answers_user_links aul ON caa.id = aul.answer_id
+INNER JOIN components_survey_options cso on cso.label = caa.answer
+WHERE 
+    aul.user_id = $1 and caa.answer = cso.label
+ORDER BY caa.answer asc 
+      `, [patientId]);
+      res.json(result.rows)
+  } catch (e) { 
+    console.error("Error getting the questions", e);
+    res.status(500).json({error: "Error getting the questions"})
+  }
+});
+
+app.get("/api/question_checkboxes/:patientId", async (req, res) => {
+  const patientId = req.params.patientId;
+
+  try {
+    const result = await pool.query(`
+SELECT DISTINCT ON (csa.question)
+    csa.id,
+    csa.question,
+    caa.answer
+FROM 
+    public.components_answer_answers caa
+JOIN 
+    public.components_survey_answers csa ON caa.question_id = csa.id
+JOIN 
+    public.answers_user_links aul ON caa.id = aul.answer_id
+INNER JOIN components_survey_checkboxes csc on csc.question = csa.question
+WHERE 
+    aul.user_id = $1 and csa.question = csc.question
+ORDER BY csa.question asc  
+      `, [patientId]);
+      res.json(result.rows)
+  } catch (e) { 
+    console.error("Error getting the questions", e);
+    res.status(500).json({error: "Error getting the questions"})
+  }
+});
+
+app.get("/api/question_answers/:questionId", async (req, res) => {
+  const questionId = req.params.questionId;
+
+  try {
+    const result = await pool.query(`
+      select csal.answer_id, caa.answer
+from component_survey_answer_link csal
+join components_answer_answers caa on csal.answer_id = caa.id
+where csal.question_id = $1
+      `, [questionId]);
+      res.json(result.rows)
+  } catch (e) { 
+    console.error("Error getting the questions", e);
+    res.status(500).json({error: "Error getting the questions"})
+  }
+});
+
+
 // queries the database for app user ids and refetches all user data
 app.get("/api/ap_user_ids", async (req, res) => {
   // fetch the database data here, can move this to a refresh button functionality in future if wanted
@@ -280,6 +481,8 @@ app.get("/api/daily_data", (req, res) => {
   console.log("[DEBUG] Daily Data:", JSON.stringify(correct_stats, null, 2));
   res.json(correct_stats);
 });
+
+
 
 
 // queries the database to gather patient goals to display on the dashboard and to use in the recommendation generation
