@@ -90,10 +90,13 @@ function DashboardBody({
   const [isGlucoseActive, setIsGucoseActive] = useState(false);
   const [isSurveyActive, setIsSurveyActive] = useState(false);
 
+  const activeIndex = isMainActive ? 0 : isGlucoseActive ? 1 : 2;
+
   // Handler to update state when ToggleSwitch changes
-  const handleToggleSwitch = (value) => {
-    console.log(value);
-    setIsMainActive(value);
+  const handleToggleSwitch = (mainActive, glucoseActive, surveyActive) => {
+    setIsMainActive(mainActive);
+    setIsGucoseActive(glucoseActive);
+    setIsSurveyActive(surveyActive);
   };
 
   const [group, setGroup] = useState(
@@ -531,151 +534,93 @@ function DashboardBody({
   }*/
 
 
-  function ToggleSwitch({ isMainActive, isGlucoseActive, isSurveysActive, onToggle }) {
-    const [activeIndex, setActiveIndex] = useState(0);
-    const [importDataAlert, setImportDataAlert] = useState(false);
-    const [patientsAlert, setPatientsAlert] = useState(false);
+  function ToggleSwitch({ isMainActive, isGlucoseActive, isSurveysActive, onToggle, activeIndex: initialActiveIndex }) {
+    const [activeIndex, setActiveIndex] = useState(initialActiveIndex);
+
+    useEffect(() => {
+      setActiveIndex(initialActiveIndex); // Sincronizar con el índice activo inicial
+    }, [initialActiveIndex]);
 
     const handleClick = (index) => {
       setActiveIndex(index);
       if (index === 0) {
         onToggle(true, false, false);
-        setIsMainActive(true);
-        setIsGucoseActive(false);
-        setIsSurveyActive(false);
       } else if (index === 1) {
         onToggle(false, true, false);
-        setIsGucoseActive(true);
-        setIsMainActive(false);
-        setIsSurveyActive(false);
       } else if (index === 2) {
         onToggle(false, false, true);
-        setIsSurveyActive(true);
-        setIsMainActive(false);
-        setIsGucoseActive(false);
       }
-      console.log(index);
-    };
-
-    const exportData = () => {
-      setImportDataAlert(true);
-    };
-
-    const dataPatient = () => {
-      setPatientsAlert(true)
-    }
-
-
-
-    const handleModalClose = () => {
-      //setImportDataAlert(false);
-      setPatientsAlert(false)
-    };
-
-    const handleModalSubmit = (data) => {
-      console.log('Imported data:', data);
     };
 
     return (
-      <>
+      <div
+        className="toggle-container"
+        style={{
+          position: 'relative',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          width: '300px',
+          height: '30px',
+          borderRadius: '15px',
+          backgroundColor: '#000',
+          cursor: 'pointer',
+          overflow: 'hidden',
+        }}
+      >
         <div
-          className="toggle-container"
+          className="toggle"
           style={{
-            position: 'relative',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            width: '300px',
-            height: '30px',
-            borderRadius: '15px',
-            backgroundColor: '#000',
-            cursor: 'pointer',
-            overflow: 'hidden',
+            position: 'absolute',
+            top: '2px',
+            width: '33%',
+            height: '27px',
+            borderRadius: '18px',
+            backgroundColor: 'white',
+            transform: `translateX(${activeIndex * 100}px)`,
+            transition: 'transform 0.3s ease',
           }}
-        >
-          <div
-            className="toggle"
-            style={{
-              position: 'absolute',
-              top: '2px',
-              width: '33%',
-              height: '27px',
-              borderRadius: '18px',
-              backgroundColor: 'white',
-              transform: `translateX(${activeIndex * 100}px)`,
-              transition: 'transform 0.3s ease',
-            }}
-          >{activeIndex}</div>
-          <div
-            className="toggle-label"
-            style={{
-              zIndex: 1,
-              width: '33%',
-              textAlign: 'center',
-              lineHeight: '40px',
-              color: activeIndex === 0 ? 'black' : 'white',
-            }}
-            onClick={() => handleClick(0)}
-          >
-            Home
-          </div>
-          <div
-            className="toggle-label"
-            style={{
-              zIndex: 1,
-              width: '33%',
-              textAlign: 'center',
-              lineHeight: '40px',
-              color: activeIndex === 1 ? 'black' : 'white',
-            }}
-            onClick={() => handleClick(1)}
-          >
-            Glucose
-          </div>
-          <div
-            className="toggle-label"
-            style={{
-              zIndex: 1,
-              width: '33%',
-              textAlign: 'center',
-              lineHeight: '40px',
-              color: activeIndex === 2 ? 'black' : 'white',
-            }}
-            onClick={() => handleClick(2)}
-          >
-            Surveys
-          </div>
-        </div>
-
-
-        {/* <div
-          className="toggle-container"
-          onClick={dataPatient}
+        ></div>
+        <div
+          className="toggle-label"
           style={{
-            marginLeft: '1rem',
-            position: 'relative',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            width: '150px',
-            height: '30px',
-            borderRadius: '15px',
-            backgroundColor: '#000',
-            cursor: 'pointer',
-            overflow: 'hidden',
+            zIndex: 1,
+            width: '33%',
+            textAlign: 'center',
             lineHeight: '40px',
-            fontSize: '1.25rem',
+            color: activeIndex === 0 ? 'black' : 'white',
           }}
+          onClick={() => handleClick(0)}
         >
-          Show patients
+          Home
         </div>
-        {importDataAlert && (
-          <ImportDataModal onClose={handleModalClose} onSubmit={handleModalSubmit} />
-        )}
-        {patientsAlert && (
-          <Patients onClose={handleModalClose} />
-        )} */}
-      </>
+        <div
+          className="toggle-label"
+          style={{
+            zIndex: 1,
+            width: '33%',
+            textAlign: 'center',
+            lineHeight: '40px',
+            color: activeIndex === 1 ? 'black' : 'white',
+          }}
+          onClick={() => handleClick(1)}
+        >
+          Glucose
+        </div>
+        <div
+          className="toggle-label"
+          style={{
+            zIndex: 1,
+            width: '33%',
+            textAlign: 'center',
+            lineHeight: '40px',
+            color: activeIndex === 2 ? 'black' : 'white',
+          }}
+          onClick={() => handleClick(2)}
+        >
+          Surveys
+        </div>
+      </div>
     );
   }
   /*const [surveys, setSurveys] = useState([]);
@@ -753,7 +698,10 @@ function DashboardBody({
                 }}>
                   <ToggleSwitch
                     isMainActive={isMainActive}
+                    isGlucoseActive={isGlucoseActive}
+                    isSurveysActive={isSurveyActive}
                     onToggle={handleToggleSwitch}
+                    activeIndex={isMainActive ? 0 : isGlucoseActive ? 1 : 2} // Define activeIndex aquí
                   />
                 </div>
               </div>
@@ -985,7 +933,7 @@ function DashboardBody({
               <BreakdownCardHolder>
                 <div className={"Breakdown"}>
                   <GraphCard>
-                    <SurveyGraph patientId={10}/>
+                    <SurveyGraph patientId={10} />
                   </GraphCard>
 
                   <div

@@ -8,15 +8,15 @@ function SurveyGraph({ patientId }) {
   const [labels, setLabels] = useState([]);
   const [reactionData, setReactionData] = useState([]);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
-  const [selectedQuestionId, setSelectedQuestionId] = useState(0);
-  const [isRange, setIsRange] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [isRange, setIsRange] = useState(false);
   const [isQuestionSelected, setIsQuestionSelected] = useState(false);
   const chartRef = useRef(null);
   const [optionQuestions, setOptionQuestion] = useState([])
   const [checkboxQuestions, setCheckboxQuestion] = useState([])
   const [isOption, setIsOption] = useState(false);
-  const [isCheckbox, setIsCheckbox] = useState(false)
+  const [isCheckbox, setIsCheckbox] = useState(false);
+  const [isText, setIsText] = useState(false);
 
   useEffect(() => {
     const fetchOptionQuestion = async () => {
@@ -39,7 +39,7 @@ function SurveyGraph({ patientId }) {
         const response = await axios.get(`http://localhost:5001/api/question_checkboxes/${patientId}`);
         const data = response.data;
 
-        setCheckboxQuestion(data); 
+        setCheckboxQuestion(data);
         console.log(data)
       } catch (err) {
         console.error("Error fetching survey data:", err);
@@ -84,21 +84,21 @@ function SurveyGraph({ patientId }) {
               day: days[index]?.day,
               type,
             };
-          } else if (isCheckbox){
-          const type = "checkbox";
-          return {
-            ...item,
-            day: days[index]?.day,
-            type,
-          };
-        } else {
-          const type = "normal";
-          return {
-            ...item,
-            day: days[index]?.day,
-            type,
-          };
-        }
+          } else if (isCheckbox) {
+            const type = "checkbox";
+            return {
+              ...item,
+              day: days[index]?.day,
+              type,
+            };
+          } else {
+            const type = "textField";
+            return {
+              ...item,
+              day: days[index]?.day,
+              type,
+            };
+          }
         }).filter(Boolean); // Filtrar valores nulos
 
         setLabels(processedQuestions.map((item) => item.answer));
@@ -180,6 +180,23 @@ function SurveyGraph({ patientId }) {
     chartRef.current = new Chart(chartCanvas, config);
   }, [labels, reactionData, surveyData, isQuestionSelected, selectedQuestion]);
 
+  useEffect(() => {
+    return () => {
+      // Limpieza al desmontar el componente
+      setSurveyData([]);
+      setLabels([]);
+      setReactionData([]);
+      setIsRange(false);
+      setIsOption(false);
+      setIsCheckbox(false);
+      setIsQuestionSelected(false);
+      if (chartRef.current) {
+        chartRef.current.destroy();
+        chartRef.current = null;
+      }
+    };
+  }, []);
+
   const renderOptionRectangles = (last14DaysAnswers) => {
     if (!last14DaysAnswers || last14DaysAnswers.length === 0) {
       return <div>Loading answers...</div>;
@@ -220,23 +237,32 @@ function SurveyGraph({ patientId }) {
     );
   };
 
-  const handleDotClick = (index) => {
-    const id = surveyData[index]?.id;
-    const selected = surveyData[index]?.question;
-    const selectedType = surveyData[index]?.type
+  const uniqueQuestions = surveyData.filter(
+    (item, index, self) =>
+      self.findIndex((q) => q.question === item.question) === index
+  );
 
+  const handleDotClick = (index) => {
+    const selectedQuestion = uniqueQuestions[index];
+
+    const id = selectedQuestion.id; // Ahora seguro que `selectedQuestion` no es null
+    const selected = selectedQuestion.question;
+    console.log(selectedQuestion.answer);
+    const selectedType = selectedQuestion.type;
+
+    setSelectedAnswer(selectedQuestion.answer)
     setSelectedQuestion(selected);
-    setSelectedQuestionId(id);
-    console.log(surveyData[index]?.type);
+
     if (selectedType === "range") {
       setIsRange(true);
       setIsOption(false);
       setIsCheckbox(false);
+      setIsText(false);
     } else if (selectedType === "option") {
-      setIsOption(true)
+      setIsOption(true);
       setIsRange(false);
-      setIsCheckbox(false)
-    
+      setIsCheckbox(false);
+      setIsText(false);
 
       const last14DaysAnswers = surveyData
         .filter((item) => item.question === selected)
@@ -245,10 +271,11 @@ function SurveyGraph({ patientId }) {
       setReactionData(last14DaysAnswers);
       setIsQuestionSelected(true);
       return;
-    }  else if (selectedType === "checkbox"){
+    } else if (selectedType === "checkbox") {
       setIsCheckbox(true);
       setIsOption(false);
       setIsRange(false);
+      setIsText(false);
 
       const last14DaysAnswers = surveyData
         .filter((item) => item.question === selected)
@@ -257,6 +284,11 @@ function SurveyGraph({ patientId }) {
       setReactionData(last14DaysAnswers);
       setIsQuestionSelected(true);
       return;
+    } else {
+      setIsText(true);
+      setIsOption(false);
+      setIsCheckbox(false);
+      setIsRange(false);
     }
 
     const filteredData = surveyData
@@ -268,104 +300,101 @@ function SurveyGraph({ patientId }) {
       answer: filteredData[i] || 0,
     }));
 
+    console.log(selectedType);
     setReactionData(days.map((day) => day.answer));
     setLabels(days);
     setIsQuestionSelected(true);
   };
-
   const resetGraph = () => {
     setSelectedQuestion(null);
-    setSelectedAnswer(null);
     setIsQuestionSelected(false);
     setReactionData(surveyData.map((item) => (item.is_reaction_question ? 1 : 0)));
     setLabels(surveyData.map((item) => item.answer));
   };
 
-  const uniqueQuestions = surveyData.filter(
-  (item, index, self) =>
-    self.findIndex((q) => q.question === item.question) === index // Filtrar preguntas únicas
-);
-
-return (
-  <div>
-    <h2>Survey Data Visualization</h2>
-    {isQuestionSelected && (
-      <div style={{ marginBottom: "20px", textAlign: "center" }}>
-        <button onClick={resetGraph} style={{ marginBottom: "20px" }}>
-          Reset Graph
-        </button>
-        <div style={{ marginBottom: "20px", display: "flex", justifyContent: "center" }}>
-          {uniqueQuestions.map((_, index) => (
-            <div
-              key={index}
-              onClick={() => handleDotClick(index)} // Manejar clic en el punto
-              style={{
-                width: "10px",
-                height: "10px",
-                backgroundColor: "blue",
-                borderRadius: "50%",
-                margin: "0 5px",
-                cursor: "pointer",
-              }}
-            ></div>
-          ))}
+  console.log(uniqueQuestions)
+  return (
+    <div>
+      <h2>Survey Data Visualization</h2>
+      {isQuestionSelected && (
+        <div style={{ marginBottom: "20px", textAlign: "center" }}>
+          <button onClick={resetGraph} style={{ marginBottom: "20px" }}>
+            Reset Graph
+          </button>
+          <div style={{ marginBottom: "20px", display: "flex", justifyContent: "center" }}>
+            {uniqueQuestions.map((_, index) => (
+              <div
+                key={index}
+                onClick={() => handleDotClick(index)} // Manejar clic en el punto
+                style={{
+                  width: "10px",
+                  height: "10px",
+                  backgroundColor: "blue",
+                  borderRadius: "50%",
+                  margin: "0 5px",
+                  cursor: "pointer",
+                }}
+              ></div>
+            ))}
+          </div>
+          <h3>Selected Question:</h3>
+          <p>{selectedQuestion}</p>
         </div>
-        <h3>Selected Question:</h3>
-        <p>{selectedQuestion}</p>
-      </div>
-    )}
-    {!isQuestionSelected && !selectedQuestion && (  
-      <div style={{ marginBottom: "20px", textAlign: "center" }}>
-        <h3>Select a Question:</h3>
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          {Array.from({ length: Math.ceil(uniqueQuestions.length / 2) }).map((_, rowIndex) => (
-            <div
-              key={rowIndex}
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                gap: "10px",
-              }}
-            >
-              {uniqueQuestions
-                .slice(rowIndex * 2, rowIndex * 2 + 2) // Obtener dos preguntas por fila
-                .map((item, index) => (
-                  <div
-                    key={index}
-                    onClick={() => handleDotClick(rowIndex * 2 + index)} // Seleccionar la pregunta al hacer clic
-                    style={{
-                      width: "30rem",
-                      cursor: "pointer",
-                      padding: ".5rem",
-                      border: "1px solid black",
-                      borderRadius: ".25rem",
-                      backgroundColor: "#f9f9f9",
-                      textAlign: "center",
-                    }}
-                  >
-                    {item.question}
-                  </div>
-                ))}
-            </div>
-          ))}
+      )}
+      {!isQuestionSelected && !selectedQuestion && (
+        <div style={{ marginBottom: "20px", textAlign: "center" }}>
+          <h3>Select a Question:</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {Array.from({ length: Math.ceil(uniqueQuestions.length / 2) }).map((_, rowIndex) => (
+              <div
+                key={rowIndex}
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: "10px",
+                }}
+              >
+                {uniqueQuestions
+                  .slice(rowIndex * 2, rowIndex * 2 + 2) // Obtener dos preguntas por fila
+                  .map((item, index) => (
+                    <div
+                      key={index}
+                      onClick={() => handleDotClick(rowIndex * 2 + index)} // Seleccionar la pregunta al hacer clic
+                      style={{
+                        width: "30rem",
+                        cursor: "pointer",
+                        padding: ".5rem",
+                        border: "1px solid black",
+                        borderRadius: ".25rem",
+                        backgroundColor: "#f9f9f9",
+                        textAlign: "center",
+                      }}
+                    >
+                      {item.question}
+                    </div>
+                  ))}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-    )}
-    {selectedQuestion && (isOption || isCheckbox) && (
-      <div style={{ marginBottom: "20px", textAlign: "center" }}>
-        {renderOptionRectangles(reactionData)}
-      </div>
-    )}
-    {selectedQuestion && !(isOption || isCheckbox) && (
-      <canvas id="surveyGraph" width="400" height="200"></canvas>
-    )}
-    {selectedAnswer && (
-      <div style={{ marginTop: "20px", textAlign: "center" }}>
-        <h3>Answer:</h3>
-        <p>{selectedAnswer}</p>
-      </div>
-    )}
-  </div>
-)}
+      )}
+      {selectedQuestion && (isOption || isCheckbox) && (
+        <div style={{ marginBottom: "20px", textAlign: "center" }}>
+          {renderOptionRectangles(reactionData)}
+        </div>
+      )}
+      {selectedQuestion && !(isOption || isCheckbox || isText) && (
+        <canvas id="surveyGraph" width="400" height="200"></canvas>
+      )}
+      {selectedQuestion && isText && (
+        <div style={{ marginBottom: "20px", textAlign: "center" }}>
+          {console.log("Tipo: " + selectedQuestion)}
+          <h3>Answer:</h3>
+          <p>{selectedAnswer}</p>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default SurveyGraph;

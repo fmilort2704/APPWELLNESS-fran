@@ -416,36 +416,44 @@ function Graph({
   const chartCanvas = document.getElementById("graph");
 
   useEffect(() => {
+    const chartCanvas = document.getElementById("graph");
+  
+    if (!chartCanvas) {
+      console.warn("Chart canvas is not available.");
+      return; // Salir si el canvas no está disponible
+    }
+  
     let newEnd = new Date(endDate);
     if (prediction) {
       newEnd.setDate(newEnd.getDate() + 7);
     }
     const dateArray = [];
-
+  
     let currentDate = new Date(startDate);
     while (currentDate.setHours(0, 0, 0, 0) <= newEnd.setHours(0, 0, 0, 0)) {
       dateArray.push(new Date(currentDate));
       currentDate.setDate(currentDate.getDate() + 1);
     }
+  
     const data = {
       labels: dateArray.map((date) => toDate(date)),
       datasets: [
         label1 === "Glucose"
           ? {
-          label: label1,
-          type: "line",
-          data: dataValues.input_data_1,
-          borderColor: "red",
-          borderWidth: 2,
-          tension: 0.4,
+              label: label1,
+              type: "line",
+              data: dataValues.input_data_1,
+              borderColor: "red",
+              borderWidth: 2,
+              tension: 0.4,
             }
           : {
-            label: label1,
-            data: display_data_1,
-            backgroundColor: color_arr_1,
-            borderWidth: 2,
-            borderRadius: 10,
-          },
+              label: label1,
+              data: display_data_1,
+              backgroundColor: color_arr_1,
+              borderWidth: 2,
+              borderRadius: 10,
+            },
         {
           label: label2,
           data: display_data_2,
@@ -475,6 +483,7 @@ function Graph({
         },
       ],
     };
+  
     const config = {
       type: "bar",
       data: data,
@@ -515,7 +524,6 @@ function Graph({
               displayFormats: {
                 day: "yyyy-MM-dd",
               },
-              //locale: "en-GB",
             },
             grid: {
               color: axisColour,
@@ -525,7 +533,6 @@ function Graph({
           },
           y: {
             beginAtZero: true,
-
             title: {
               display: true,
               text: filterMode,
@@ -543,94 +550,9 @@ function Graph({
             },
           },
         },
-        onClick: (event, elements) => {
-          /*
-            the following code is disabled at this moment in time but given an an API that retrieves Hourly data for a user, could be integrated into
-            the dashboard in the future.
-          */
-          if (false) {
-            try {
-              const date = dateArray[elements[0].index];
-              //newData should be replaced by contacting the APi and retrieving the 24 values. -- pu this after if statement
-              const newData = [
-                0, 0, 0, 0, 0, 0, 0, 350, 500, 230, 700, 650, 400, 900, 700,
-                100, 540, 1000, 250, 100, 350, 200, 100, 0, 0,
-              ];
-              console.log(elements[0].index);
-
-              if (
-                chartScale != "hours" &&
-                ((prediction &&
-                  elements[0].index + 7 < display_data_1.length) ||
-                  prediction === undefined ||
-                  prediction === null)
-              ) {
-                setPrevOpt(_.cloneDeep(chart.options));
-                setPrevData(_.cloneDeep(chart.data));
-                setScale("hours");
-                setIsHourly(true);
-                const cumuData = [newData[0]];
-                for (let i = 1; i < newData.length; i++) {
-                  cumuData.push(cumuData[i - 1] + newData[i]);
-                }
-                chart.data.datasets.find(
-                  (dataset) => dataset.label === "Cumulative"
-                ).data = cumuData;
-
-                //const newColors = newData.map(value => barColouring(value));
-
-                chart.data.datasets.find(
-                  (dataset) => dataset.label === label1
-                ).data = newData;
-                chart.data.datasets.find(
-                  (dataset) => dataset.label === "Target"
-                ).data = Array(newData.length).fill(dataValues.tgt);
-                chart.data.labels = [
-                  "00:00",
-                  "01:00",
-                  "02:00",
-                  "03:00",
-                  "04:00",
-                  "05:00",
-                  "06:00",
-                  "07:00",
-                  "08:00",
-                  "09:00",
-                  "10:00",
-                  "11:00",
-                  "12:00",
-                  "13:00",
-                  "14:00",
-                  "15:00",
-                  "16:00",
-                  "17:00",
-                  "18:00",
-                  "19:00",
-                  "20:00",
-                  "21:00",
-                  "22:00",
-                  "23:00",
-                  "00:00",
-                ];
-                chart.options.scales.x = {};
-                chart.data.datasets.find(
-                  (dataset) => dataset.label === label1
-                ).backgroundColor = barColour;
-                chart.update();
-              } else if (
-                chartScale != "hours" &&
-                prediction &&
-                elements[0].index + 7 >= display_data_1.length
-              ) {
-                //get hourly predictions for the given day - would these be of a different colour and label?????
-              }
-            } catch (err) {
-              console.log(err);
-            }
-          }
-        },
       },
     };
+  
     if (chartRef.current) {
       chartRef.current.destroy();
       chart = new Chart(chartCanvas, config);
@@ -659,7 +581,6 @@ function Graph({
     filterMode,
     chartScale,
     prediction,
-    chartCanvas,
     dataValues.isStacked,
     dataValues.tgt,
   ]);
