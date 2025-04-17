@@ -11,6 +11,7 @@ function SurveyGraph({ patientId }) {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [isRange, setIsRange] = useState(false);
   const [isQuestionSelected, setIsQuestionSelected] = useState(false);
+  const [filterType, setFilterType] = useState("all");
   const chartRef = useRef(null);
   const [optionQuestions, setOptionQuestion] = useState([])
   const [checkboxQuestions, setCheckboxQuestion] = useState([])
@@ -242,15 +243,20 @@ function SurveyGraph({ patientId }) {
       self.findIndex((q) => q.question === item.question) === index
   );
 
-  const handleDotClick = (index) => {
-    const selectedQuestion = uniqueQuestions[index];
+  const filteredQuestions = uniqueQuestions
+    .map((q, index) => ({ ...q, originalIndex: index }))
+    .filter((q) => filterType === "all" || q.type === filterType);
 
-    const id = selectedQuestion.id; // Ahora seguro que `selectedQuestion` no es null
+  const handleDotClick = (index) => {
+    const originalIndex = filteredQuestions[index].originalIndex; // Obtener índice original
+    const selectedQuestion = uniqueQuestions[originalIndex]; // Usar índice original
+
+    const id = selectedQuestion.id;
     const selected = selectedQuestion.question;
     console.log(selectedQuestion.answer);
     const selectedType = selectedQuestion.type;
 
-    setSelectedAnswer(selectedQuestion.answer)
+    setSelectedAnswer(selectedQuestion.answer);
     setSelectedQuestion(selected);
 
     if (selectedType === "range") {
@@ -305,6 +311,7 @@ function SurveyGraph({ patientId }) {
     setLabels(days);
     setIsQuestionSelected(true);
   };
+
   const resetGraph = () => {
     setSelectedQuestion(null);
     setIsQuestionSelected(false);
@@ -341,40 +348,46 @@ function SurveyGraph({ patientId }) {
           <p>{selectedQuestion}</p>
         </div>
       )}
+
+
       {!isQuestionSelected && !selectedQuestion && (
         <div style={{ marginBottom: "20px", textAlign: "center" }}>
           <h3>Select a Question:</h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            {Array.from({ length: Math.ceil(uniqueQuestions.length / 2) }).map((_, rowIndex) => (
-              <div
-                key={rowIndex}
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  gap: "10px",
-                }}
-              >
-                {uniqueQuestions
-                  .slice(rowIndex * 2, rowIndex * 2 + 2) // Obtener dos preguntas por fila
-                  .map((item, index) => (
-                    <div
-                      key={index}
-                      onClick={() => handleDotClick(rowIndex * 2 + index)} // Seleccionar la pregunta al hacer clic
-                      style={{
-                        width: "30rem",
-                        cursor: "pointer",
-                        padding: ".5rem",
-                        border: "1px solid black",
-                        borderRadius: ".25rem",
-                        backgroundColor: "#f9f9f9",
-                        textAlign: "center",
-                      }}
-                    >
-                      {item.question}
-                    </div>
-                  ))}
-              </div>
-            ))}
+          <div style={{ marginBottom: "20px", textAlign: "center" }}>
+            <label htmlFor="filterType">Filter by Type: </label>
+            <select
+              id="filterType"
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+            >
+              <option value="all">All</option>
+              <option value="range">Range</option>
+              <option value="option">Option</option>
+              <option value="checkbox">Checkbox</option>
+              <option value="textField">Text Field</option>
+            </select>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", maxWidth: "100%", gap: "1rem" }}>
+            {filteredQuestions
+              .map((item, index) => (
+                <div
+                  key={item.originalIndex}
+                  onClick={() => handleDotClick(index)} 
+                  style={{
+                    flex: "0 1 calc (50% -10px)",
+                    boxSizing: "border-box",
+                    cursor: "pointer",
+                    width: "18rem",
+                    padding: ".5rem",
+                    border: "1px solid black",
+                    borderRadius: ".25rem",
+                    backgroundColor: "#f9f9f9",
+                  }}
+                >
+                  {item.question}
+                </div>
+              )
+              )}
           </div>
         </div>
       )}
