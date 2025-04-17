@@ -933,7 +933,7 @@ function DashboardBody({
               <BreakdownCardHolder>
                 <div className={"Breakdown"}>
                   <GraphCard>
-                    <SurveyGraph patientId={10} />
+                    <SurveyGraph patientId={10} theme={selectedTheme} />
                   </GraphCard>
 
                   <div

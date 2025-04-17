@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import Chart from "chart.js/auto";
-import { isCookie } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 
-function SurveyGraph({ patientId }) {
+function SurveyGraph({ patientId, theme }) {
   const [surveyData, setSurveyData] = useState([]);
   const [labels, setLabels] = useState([]);
   const [reactionData, setReactionData] = useState([]);
@@ -116,7 +117,6 @@ function SurveyGraph({ patientId }) {
     if (chartRef.current) {
       chartRef.current.destroy();
     }
-    const chartType = selectedQuestion && isRange ? "line" : "bar";
     const chartCanvas = document.getElementById("surveyGraph");
     const data = {
       labels: isQuestionSelected
@@ -124,10 +124,10 @@ function SurveyGraph({ patientId }) {
         : surveyData.map((item) => item.answer),
       datasets: [
         {
-          label: isQuestionSelected ? `Responses for: ${selectedQuestion}` : "Reaction Questions",
+          label: "",
           data: reactionData,
-          borderColor: "blue",
-          backgroundColor: "rgba(0, 123, 255, 0.5)",
+          borderColor: "#FF0000",
+          backgroundColor:"#FF0000",
           borderWidth: 2,
           tension: 0.4,
           fill: false,
@@ -136,13 +136,13 @@ function SurveyGraph({ patientId }) {
     };
 
     const config = {
-      type: chartType,
+      type: "line",
       data: data,
       options: {
         responsive: true,
         plugins: {
           legend: {
-            display: true,
+            display: false,
             position: "top",
           },
           tooltip: {
@@ -160,7 +160,7 @@ function SurveyGraph({ patientId }) {
           x: {
             title: {
               display: true,
-              text: isQuestionSelected ? "Days" : "Survey Answers", // Cambiar título dinámicamente
+              text: "Days",
             },
           },
           y: {
@@ -183,7 +183,6 @@ function SurveyGraph({ patientId }) {
 
   useEffect(() => {
     return () => {
-      // Limpieza al desmontar el componente
       setSurveyData([]);
       setLabels([]);
       setReactionData([]);
@@ -226,7 +225,7 @@ function SurveyGraph({ patientId }) {
                   padding: ".5rem",
                   border: "1px solid gray",
                   borderRadius: ".5rem",
-                  color: "black",
+                  color: theme.name === "highcon" ? "white" : "black",
                 }}
               >
                 {answer || "No answer"}
@@ -248,6 +247,7 @@ function SurveyGraph({ patientId }) {
     .filter((q) => filterType === "all" || q.type === filterType);
 
   const handleDotClick = (index) => {
+    console.log(theme.name);
     const originalIndex = filteredQuestions[index].originalIndex; // Obtener índice original
     const selectedQuestion = uniqueQuestions[originalIndex]; // Usar índice original
 
@@ -322,12 +322,27 @@ function SurveyGraph({ patientId }) {
   console.log(uniqueQuestions)
   return (
     <div>
-      <h2>Survey Data Visualization</h2>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 10px" }}>
+        {selectedQuestion && (
+          <button
+            onClick={resetGraph}
+            style={{
+              color: theme.name === "highcon" ? "white" : "black",
+              border: "none",
+              backgroundColor: "transparent",
+              cursor: "pointer",
+              fontSize: "1.5rem",
+            }}
+          >
+            <FontAwesomeIcon icon={faArrowLeft} />
+          </button>
+        )}
+        <h2 style={{ margin: 0, textAlign: "center", flex: 1 }}>Survey Data Visualization</h2>
+        <div style={{ width: "1.5rem" }}></div> {/* Espacio vacío para equilibrar */}
+      </div>
       {isQuestionSelected && (
         <div style={{ marginBottom: "20px", textAlign: "center" }}>
-          <button onClick={resetGraph} style={{ marginBottom: "20px" }}>
-            Reset Graph
-          </button>
+          Questions:
           <div style={{ marginBottom: "20px", display: "flex", justifyContent: "center" }}>
             {uniqueQuestions.map((_, index) => (
               <div
@@ -336,7 +351,15 @@ function SurveyGraph({ patientId }) {
                 style={{
                   width: "10px",
                   height: "10px",
-                  backgroundColor: "blue",
+                  backgroundColor: theme.name === "green"
+                    ? "#779CA0" 
+                    : theme.name === "blue"
+                      ? "#89ABC5" 
+                      : theme.name === "dark"
+                        ? "#3F4858" 
+                        : theme.name === "highcon"
+                          ? "rgb(226, 225, 225)" 
+                          : "#CCCCCC", 
                   borderRadius: "50%",
                   margin: "0 5px",
                   cursor: "pointer",
@@ -354,7 +377,7 @@ function SurveyGraph({ patientId }) {
         <div style={{ marginBottom: "20px", textAlign: "center" }}>
           <h3>Select a Question:</h3>
           <div style={{ marginBottom: "20px", textAlign: "center" }}>
-            <label htmlFor="filterType">Filter by Type: </label>
+            <label>Filter by Type: </label>
             <select
               id="filterType"
               value={filterType}
@@ -372,8 +395,9 @@ function SurveyGraph({ patientId }) {
               .map((item, index) => (
                 <div
                   key={item.originalIndex}
-                  onClick={() => handleDotClick(index)} 
+                  onClick={() => handleDotClick(index)}
                   style={{
+                    color: "black",
                     flex: "0 1 calc (50% -10px)",
                     boxSizing: "border-box",
                     cursor: "pointer",
