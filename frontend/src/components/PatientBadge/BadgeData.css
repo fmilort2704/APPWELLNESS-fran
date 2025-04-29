@@ -1,0 +1,13 @@
+@keyframes fadeInZoom {
+    0% {
+        opacity: 0;
+        transform: scale(0);
+        box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+}

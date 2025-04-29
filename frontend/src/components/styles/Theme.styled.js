@@ -4,13 +4,13 @@
 export const dark = {
   name: "dark",
   colors: {
-    dashboardbackground: " #1F2737",
+    dashboardbackground: " #000000",//
     graphbars: "#505064",
-    header: "#3F4858",
+    header: "#1A1C24",//
     headertext: "#FFFFFF",
-    overviewbackground: "#535D6D",
-    statcardbackground: "#535D6D",
-    graphcardbackground: "#727D8D",
+    overviewbackground: "#423F43",//
+    statcardbackground: "#423F43",//
+    graphcardbackground: "#3F4858",//
     footer: "#3F4858",
     mainheading: "#FFFFFF",
     overviewtitles: "#D3D3D3",
@@ -18,15 +18,15 @@ export const dark = {
     overviewchange: "#2FA757", 
     statcardtitles: "#FFFFFF",
     statcardtext: "#FFFFFF",
-    statcardbox: "#3F4858",
-    sidebar: "#535D6D",
-    cardHolders: "#293444",
+    statcardbox: "#3F4858", //
+    sidebar: "#423F43",
+    cardHolders: "#1A1C24",//
     toggleActivated: "#171717",
-    toggleBackground: "#373737"
+    toggleBackground: "#373737",
   },
 };
 
-export const blue = {
+/*export const blue = {
   name: "blue",
   colors: {
     dashboardbackground: "#D0E2EF",
@@ -49,9 +49,9 @@ export const blue = {
     toggleActivated: "#171717",
     toggleBackground: "#373737"
   },
-};
+};*/
 
-export const green = {
+/*export const green = {
   name: "green",
   colors: {
     dashboardbackground: "#BCD2D5",
@@ -74,28 +74,28 @@ export const green = {
     toggleActivated: "#171717",
     toggleBackground: "#373737"
   },
-};
+};*/
 
-export const highcon = {
+export const light = {
   name: "highcon",
   colors: {
-    dashboardbackground: "#2E2E2E",
+    dashboardbackground: "#FBFCF5",
     graphbars: "#D15149",
-    header: "#181818",
-    headertext: "#FFFFFF",
-    overviewbackground: "#181818",
-    statcardbackground: "#181818",
-    graphcardbackground: "#181818",
-    footer: "#181818",
-    mainheading: "#FFFFFF",
+    header: "#1C2536",
+    headertext: "#ffffff",
+    overviewbackground: "#FFFFFF",
+    statcardbackground: "#FFFFFF",
+    graphcardbackground: "#FFFFFF",
+    footer: "#1C2536",
+    mainheading: "#000000",
     overviewtitles: "#CACACA",
-    overviewstat: "#FFFFFF",
+    overviewstat: "#000000",
     overviewchange: "#2FA757", 
-    statcardtitles: "#FFFFFF",
-    statcardtext: "#FFFFFF",
-    statcardbox: "#4F4F4F",
-    sidebar: "#3F3F3F",
-    cardHolders: "#3F3F3F",
+    statcardtitles: "#000000",
+    statcardtext: "#000000",
+    statcardbox: "#FBFCF5",
+    sidebar: "#1C2536",
+    cardHolders: "#FBFCF5",
     toggleActivated: "#171717",
     toggleBackground: "#373737"
   },

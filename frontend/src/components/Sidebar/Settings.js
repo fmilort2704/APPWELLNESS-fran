@@ -10,8 +10,10 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 
 // theme options
 const options = [
-    "Green","Blue",'Dark Mode','High Contrast'
+  { label: 'Dark Mode', value: 'Dark Mode' },
+  { label: 'Light Mode', value: 'High Contrast' }
 ];
+
 
 /**
  * 
@@ -19,65 +21,66 @@ const options = [
  * @returns Settings popup containing theme selection
  */
 export function ConfirmationDialogRaw(props) {
-    const { onClose, value: valueProp, open, ...other } = props;
-    const [value, setValue] = React.useState(valueProp);
-    const themeOptions = React.useRef(null);
-  
-    React.useEffect(() => {
-      if (!open) {
-        setValue(valueProp);
-      }
-    }, [valueProp, open]);
-  
-    const handleEntering = () => {
-      if (themeOptions.current != null) {
-        themeOptions.current.focus();
-      }
-    };
-  
-    const handleCancel = () => {
-      onClose('cancel');
-    };
-  
-    const handleSave = () => {
-      onClose(value);
-    };
-  
-    const handleChange = (event) => {
-      setValue(event.target.value);
-    };
-  
-    return (
-      <Dialog
-        sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
-        maxWidth="xs"
-        TransitionProps={{ onEntering: handleEntering }}
-        open={open}
-        {...other}
-      >
-        <DialogTitle>Select Theme</DialogTitle>
-        <DialogContent dividers>
-          <RadioGroup
-            ref={themeOptions}
-            value={value}
-            onChange={handleChange}
-          >
-            {options.map((option) => (
-              <FormControlLabel
-                value={option}
-                key={option}
-                control={<Radio />}
-                label={option}
-              />
-            ))}
-          </RadioGroup>
-        </DialogContent>
-        <DialogActions>
-          <Button autoFocus onClick={handleCancel}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave}>Ok</Button>
-        </DialogActions>
-      </Dialog>
-    );
-  }
+  const { onClose, value: valueProp, open, ...other } = props;
+  const [value, setValue] = React.useState(valueProp);
+  const themeOptions = React.useRef(null);
+
+  React.useEffect(() => {
+    if (!open) {
+      setValue(valueProp);
+    }
+  }, [valueProp, open]);
+
+  const handleEntering = () => {
+    if (themeOptions.current != null) {
+      themeOptions.current.focus();
+    }
+  };
+
+  const handleCancel = () => {
+    onClose('cancel');
+  };
+
+  const handleSave = () => {
+    onClose(value);
+  };
+
+  const handleChange = (event) => {
+    setValue(event.target.value);
+  };
+
+  return (
+    <Dialog
+      sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
+      maxWidth="xs"
+      TransitionProps={{ onEntering: handleEntering }}
+      open={open}
+      {...other}
+    >
+      <DialogTitle>Select Theme</DialogTitle>
+      <DialogContent dividers>
+        <RadioGroup
+          ref={themeOptions}
+          value={value}
+          onChange={handleChange}
+        >
+          {options.map((option) => (
+            <FormControlLabel
+              key={option.value}
+              value={option.value}
+              control={<Radio />}
+              label={option.label}
+            />
+          ))}
+
+        </RadioGroup>
+      </DialogContent>
+      <DialogActions>
+        <Button autoFocus onClick={handleCancel}>
+          Cancel
+        </Button>
+        <Button onClick={handleSave}>Ok</Button>
+      </DialogActions>
+    </Dialog>
+  );
+}

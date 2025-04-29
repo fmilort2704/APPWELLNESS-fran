@@ -8,7 +8,7 @@ import {
 } from "../../components/styles/PatientSelectComponents.styled";
 import { ThemeProvider } from "styled-components";
 import { GlobalStyles } from "../../components/styles/Global";
-import { blue } from "../../components/styles/Theme.styled";
+import { dark } from "../../components/styles/Theme.styled";
 import { Select, MenuItem, Input } from "@mui/material";
 import { useAuth } from "./AuthContext";
 import Axios from "axios";
@@ -20,7 +20,7 @@ const AuthPage = () => {
     institution: "",
   });
 
-  const [selectedTheme, setSelectedTheme] = useState(blue);
+  const [selectedTheme, setSelectedTheme] = useState(dark);
   const [institutions, setInstitutions] = useState([]);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -104,7 +104,7 @@ const AuthPage = () => {
                   value={formData.firstName}
                   onChange={handleChange}
                   inputProps={{
-                    style: { fontSize: "1.3em", padding: "0.5em" },
+                    style: {color: selectedTheme.colors.mainheading, backgroundColor: selectedTheme.colors.overviewbackground, fontSize: "1.3em", padding: "0.5em" },
                   }}
                   required
                 />
@@ -116,7 +116,7 @@ const AuthPage = () => {
                   value={formData.lastName}
                   onChange={handleChange}
                   inputProps={{
-                    style: { fontSize: "1.3em", padding: "0.5em" },
+                    style: {color: selectedTheme.colors.mainheading, backgroundColor: selectedTheme.colors.overviewbackground,fontSize: "1.3em", padding: "0.5em" },
                   }}
                   required
                 />
@@ -131,8 +131,10 @@ const AuthPage = () => {
                 input={<FormInputThemed />}
                 required
                 sx={{
+                  backgroundColor: selectedTheme.colors.overviewbackground,
+                  color: selectedTheme.colors.mainheading,
                   fontSize: "0.5em",
-                  paddingTop: "8px",
+                  paddingTop: "16px",
                 }}
               >
                 <MenuItem value="" disabled>

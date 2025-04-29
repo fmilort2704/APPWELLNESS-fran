@@ -18,7 +18,6 @@ import CloseIcon from '@mui/icons-material/Close';
  * @returns Alert popup
  */
 export function AlertBox(props){
-  console.log("Alert button");
     const { onClose, value: valueProp, open, ...other } = props;
 
       const handleClose = () => {

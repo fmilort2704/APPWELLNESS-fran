@@ -89,6 +89,7 @@ function Graph({
 
     Axios.get(apiUrl, { params })
       .then((response) => {
+        
         console.log('Received response, filter mode: ' + filterMode + ' data values mode: ' + dataValues.mode);
         if (filterMode === "Steps" && dataValues.mode !== "Steps") {
           setDataValues({
@@ -249,7 +250,7 @@ function Graph({
   };
 
   useEffect(() => {
-    console.log("color change to:" + theme.name);
+    console.log("color change to:" + theme.colors);
     if (theme.name === "green") {
       setTLC("#2C55E7");
       setBC("#779CA0");
@@ -267,20 +268,20 @@ function Graph({
       setAC("#D9D9D9");
     }
     if (theme.name === "dark") {
-      setTLC("#A5AB9D");
-      setBC("#505064");
-      setBC2("#797985");
-      setCMC("#C4B9AA");
-      setTC("#141414");
-      setAC("#97A3B5");
+      setTLC("#B74030");//
+      setBC("#FF0F00");//
+      setBC2("#0F65FA");//
+      setCMC("#ffffff");
+      setTC("#ffffff");//
+      setAC("#ffffff");//
     }
     if (theme.name === "highcon") {
-      setTLC("#FFCC88");
-      setBC("#D15149");
-      setBC2("#82302b");
-      setCMC("#C0587E");
-      setTC("#f3f3f3");
-      setAC("#3C3C3C");
+      setTLC("#B74030");
+      setBC("#FF0F00");
+      setBC2("#E1315B");
+      setCMC("#000000");
+      setTC("#000000");
+      setAC("#000000");
     }
   }, [theme]);
 

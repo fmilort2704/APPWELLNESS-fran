@@ -16,6 +16,9 @@ import os
 from dotenv import load_dotenv
 import pandas.io.sql as psql
 import pandas as pd
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 
 os.environ["LOKY_MAX_CPU_COUNT"] = "4"

@@ -22,8 +22,6 @@ import { Global } from "@emotion/react";
 import { ThemeProvider } from "styled-components";
 import {
   dark,
-  blue,
-  green,
   highcon,
 } from "../../components/styles/Theme.styled";
 import Axios from "axios";
@@ -42,31 +40,31 @@ import styled from "styled-components";
 import { findAllByDisplayValue } from "@testing-library/react";
 
 const user = {
-    name: "Halima Macias",
-    clinician: "Travis Cook",
-    clinic: "Default Clinic",
-    UID: "8490073671"
+  name: "Halima Macias",
+  clinician: "Travis Cook",
+  clinic: "Default Clinic",
+  UID: "8490073671"
 }
 const user2 = {
-    name: "Jannat Butler",
-    clinician: "Travis Cook",
-    clinic: "Default Clinic",
-    UID: "8416875312"
+  name: "Jannat Butler",
+  clinician: "Travis Cook",
+  clinic: "Default Clinic",
+  UID: "8416875312"
 }
 const user3 = {
-    name: "Dora Robbins",
-    clinician: "Bernard Skinner",
-    clinic: "Default Clinic",
-    UID: "8215887612"
+  name: "Dora Robbins",
+  clinician: "Bernard Skinner",
+  clinic: "Default Clinic",
+  UID: "8215887612"
 }
 const user4 = {
-    name: "Shawn Landry",
-    clinician: "Bernard Skinner",
-    clinic: "Default Clinic",
-    UID: "7923648991"
+  name: "Shawn Landry",
+  clinician: "Bernard Skinner",
+  clinic: "Default Clinic",
+  UID: "7923648991"
 }
 
-const userList = [user,user2,user3,user4]
+const userList = [user, user2, user3, user4]
 
 const AddPatientButton = styled(IconButton)`
   && {
@@ -113,11 +111,11 @@ function CardRow({ patients, navigateFunction, clinicianId, refreshUserList }) {
     Axios.post(apiUrlSearch, { email })
       .then((response) => {
         console.log("User found:", response.data);
-        setUserData({ ...response.data, clinicianId }); 
+        setUserData({ ...response.data, clinicianId });
       })
       .catch((error) => {
         console.error("Error:", error.response?.data || error.message);
-        setUserData(null); 
+        setUserData(null);
       });
   };
 
@@ -147,10 +145,10 @@ function CardRow({ patients, navigateFunction, clinicianId, refreshUserList }) {
         open={isPopupOpen}
         onClose={() => {
           handleClosePopup();
-          refreshUserList(); 
+          refreshUserList();
         }}
         handleSearch={handleSearch}
-        clinicianId={clinicianId} 
+        clinicianId={clinicianId}
       />
     </div>
   );
@@ -359,6 +357,19 @@ function AddPatientPopup({ open, onClose, handleSearch, clinicianId }) {
  * @returns Patient Card
  */
 function PatientCard({ patient, navigateFunction }) {
+  localStorage.setItem("patientName", patient.name);
+  /*const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    const data = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      const value = localStorage.getItem(key);
+      data.push({ key, value });
+    }
+    setItems(data);
+  }, []);
+  console.log(items);*/
   return (
     <PatientCardThemed
       onClick={() => navigateFunction(patient.UID, patient.name)}
@@ -421,6 +432,10 @@ function FullPatientTable({
   filterMode,
   navigateFunction,
 }) {
+  const parsed = JSON.parse(localStorage.getItem("currentTheme"));
+  const overviewBg = parsed.colors.overviewbackground;
+  const overviewstat = parsed.colors.overviewstat;
+
   const rows = [];
 
   patients.forEach((patient) => {
@@ -477,19 +492,19 @@ function FullPatientTable({
               >
                 <PatientTableCellThemed
                   align="center"
-                  style={{ fontSize: "0.7em", color: "white" }}
+                  style={{ fontSize: "0.7em", color: overviewstat }}
                 >
                   {row.name}
                 </PatientTableCellThemed>
                 <PatientTableCellThemed
                   align="center"
-                  style={{ fontSize: "0.7em", color: "white" }}
+                  style={{ fontSize: "0.7em", color: overviewstat }}
                 >
                   {row.clinician}
                 </PatientTableCellThemed>
                 <PatientTableCellThemed
                   align="center"
-                  style={{ fontSize: "0.7em", color: "white" }}
+                  style={{ fontSize: "0.7em", color: overviewstat }}
                 >
                   {row.uid}
                 </PatientTableCellThemed>
@@ -519,6 +534,11 @@ function PatientSearchBar({
   filterMode,
   onFilterModeChange,
 }) {
+  const parsed = JSON.parse(localStorage.getItem("currentTheme"));
+  const overviewBg = parsed.colors.overviewbackground;
+  console.log(overviewBg);
+  const overviewstat = parsed.colors.overviewstat;
+
   return (
     <div
       style={{
@@ -528,14 +548,16 @@ function PatientSearchBar({
       }}
     >
       <FormControlThemed
-        sx={{ m: 1, height: "1.3em", width: "8vw" }}
+        sx={{
+          backgroundColor: overviewBg, m: 1, height: "1.3em", width: "8vw"
+        }}
         variant="standard"
       >
         <Select
           value={filterMode}
           onChange={(e) => onFilterModeChange(e.target.value)}
           input={
-            <FormInputThemed style={{ fontSize: "0.5em", marginTop: "8px", color: "white"}} />
+            <FormInputThemed style={{ fontSize: "0.5em", marginTop: "8px", color: overviewstat }} />
           }
         >
           {" "}
@@ -543,25 +565,26 @@ function PatientSearchBar({
           <MenuItem selected="selected" value={"All"}>
             All
           </MenuItem>
-          <MenuItem value={"Name"}>Name</MenuItem>
+          <MenuItem value={"Name"}>Hola</MenuItem>
           <MenuItem value={"Clinician"}>Clinician</MenuItem>
           <MenuItem value={"UID"}>UID</MenuItem>
         </Select>
       </FormControlThemed>
       <FormControlThemed
         style={{
+          backgroundColor: overviewBg,
           width: "30vw",
           paddingLeft: "0.2em",
           paddingRight: "0.2em",
           height: "1.3em",
         }}
       >
-        <span>
+        <span style={{ backgroundColor: overviewBg }}>
           <Input
             value={filterText}
             placeholder="Search..."
             onChange={(e) => onFilterTextChange(e.target.value)}
-            inputProps={{ style: { fontSize: "1.5em", color: "white" } }}
+            inputProps={{ style: { fontSize: "1.5em", color: overviewstat } }}
             sx={{
               width: "30vw",
               "&::placeholder": { fontSize: "32px" },
@@ -607,12 +630,12 @@ export function PatSelect() {
   const refreshUserList = () => {
     if (clinicianId !== null) {
       console.log(`Refreshing user list for clinicianId: ${clinicianId}`);
-  
+
       const apiUrlDetails =
         process.env.NODE_ENV === "production"
           ? `/api/clinician-user-details`
           : `http://localhost:5001/api/clinician-user-details`;
-  
+
       Axios.post(apiUrlDetails, { clinicianId })
         .then((response) => {
           setData(response.data);
@@ -627,10 +650,10 @@ export function PatSelect() {
   useEffect(() => {
     refreshUserList();
   }, [clinicianId]);
-  
+
   console.log("HERE");
   console.log(data);
-  
+
   let userList = [];
   data.forEach((user) => {
     userList.push({
@@ -643,7 +666,7 @@ export function PatSelect() {
 
   console.log(userList)
 
-  const [selectedTheme, setSelectedTheme] = useState(blue);
+  const [selectedTheme, setSelectedTheme] = useState(dark);
   console.log(selectedTheme);
 
   useEffect(() => {
@@ -651,7 +674,7 @@ export function PatSelect() {
     if (currentTheme) {
       setSelectedTheme(currentTheme);
     }
-    
+
   }, []);
 
   const navigate = useNavigate();
@@ -660,17 +683,17 @@ export function PatSelect() {
     try {
       const preUrl =
         process.env.NODE_ENV === "production" ? "" : "http://localhost:5001";
-  
+
       const apiUrl = `${preUrl}/api/ap_user_ids`;
-  
+
       console.log(`[INFO] Fetching data for user ID: ${id}`);
-      
+
       localStorage.setItem("patientId", id);
 
       const response = await Axios.get(apiUrl);
-  
+
       console.log("[INFO] Fetched Data:", response.data);
-  
+
       navigate("/dashboard", { state: { id: id, name: name } });
     } catch (error) {
       console.error("[ERROR] Failed to fetch data or navigate:", error.message);
@@ -706,35 +729,35 @@ export function PatSelect() {
 
 
 // useEffect(() => {
-  //   if (clinicianId !== null) {
-  //     console.log(`Using Clinician id: ${clinicianId}`);
+//   if (clinicianId !== null) {
+//     console.log(`Using Clinician id: ${clinicianId}`);
 
-  //     // const apiUrlIDs =
-  //     //   process.env.NODE_ENV === "production"
-  //     //     ? `/api/ap_user_ids`
-  //     //     : `http://localhost:5001/api/ap_user_ids`;
+//     // const apiUrlIDs =
+//     //   process.env.NODE_ENV === "production"
+//     //     ? `/api/ap_user_ids`
+//     //     : `http://localhost:5001/api/ap_user_ids`;
 
-  //     // Axios.get(apiUrlIDs)
-  //     //   .then((response) => {
-  //     //     setData(response.data);
-  //     //     console.log("Response Data:", response.data);
-  //     //   })
-  //     //   .catch((error) => {
-  //     //     console.error("Error:", error.response?.data || error.message);
-  //     //   });
+//     // Axios.get(apiUrlIDs)
+//     //   .then((response) => {
+//     //     setData(response.data);
+//     //     console.log("Response Data:", response.data);
+//     //   })
+//     //   .catch((error) => {
+//     //     console.error("Error:", error.response?.data || error.message);
+//     //   });
 
-  //     // const apiUrlIDs =
-  //     //   process.env.NODE_ENV === "production"
-  //     //     ? `/api/clinician-user-ids`
-  //     //     : `http://localhost:5001/api/clinician-user-ids`;
+//     // const apiUrlIDs =
+//     //   process.env.NODE_ENV === "production"
+//     //     ? `/api/clinician-user-ids`
+//     //     : `http://localhost:5001/api/clinician-user-ids`;
 
-  //     // Axios.post(apiUrlIDs, { clinicianId })
-  //     //   .then((response) => {
-  //     //     setData(response.data);
-  //     //     console.log("Response Data:", response.data);
-  //     //   })
-  //     //   .catch((error) => {
-  //     //     console.error("Error:", error.response?.data || error.message);
-  //     //   });
-  //   }
-  // }, [clinicianId]);
+//     // Axios.post(apiUrlIDs, { clinicianId })
+//     //   .then((response) => {
+//     //     setData(response.data);
+//     //     console.log("Response Data:", response.data);
+//     //   })
+//     //   .catch((error) => {
+//     //     console.error("Error:", error.response?.data || error.message);
+//     //   });
+//   }
+// }, [clinicianId]);

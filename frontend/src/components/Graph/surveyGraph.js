@@ -1,65 +1,52 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useMemo, useEffect, useState, useRef } from "react";
 import axios from "axios";
 import Chart from "chart.js/auto";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 
-function SurveyGraph({ patientId, theme }) {
+function SurveyGraph({ patientId, theme, setFilterType, setFilteredQuestions, setSelectedQuestion, setSelectedQuestionId }) {
   const [surveyData, setSurveyData] = useState([]);
   const [labels, setLabels] = useState([]);
   const [reactionData, setReactionData] = useState([]);
-  const [selectedQuestion, setSelectedQuestion] = useState(null);
+  const [selectedQuestion, setSelectedQuestionLocal] = useState(null);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [isRange, setIsRange] = useState(false);
   const [isQuestionSelected, setIsQuestionSelected] = useState(false);
-  const [filterType, setFilterType] = useState("all");
+  const [filterType, setLocalFilterType] = useState("all");
   const chartRef = useRef(null);
-  const [optionQuestions, setOptionQuestion] = useState([])
-  const [checkboxQuestions, setCheckboxQuestion] = useState([])
+  const [optionQuestions, setOptionQuestion] = useState([]);
+  const [checkboxQuestions, setCheckboxQuestion] = useState([]);
   const [isOption, setIsOption] = useState(false);
   const [isCheckbox, setIsCheckbox] = useState(false);
   const [isText, setIsText] = useState(false);
+  const [filteredQuestions, setFilteredQuestionsLocal] = useState([]);
+  const [questionLimitResponse, setQuestionLimitResponse] = useState([]);
+
+  const uniqueQuestions = surveyData.filter(
+    (item, index, self) =>
+      self.findIndex((q) => q.question === item.question) === index
+  );
+
 
   useEffect(() => {
-    const fetchOptionQuestion = async () => {
+    const fetchDataForPatient = async () => {
       try {
-        const response = await axios.get(`http://localhost:5001/api/question_options/${patientId}`);
-        const data = response.data;
+        const optionResponse = await axios.get(`http://localhost:5001/api/question_options/${patientId}`);
+        const optionData = optionResponse.data;
+        setOptionQuestion(optionData);
 
-        setOptionQuestion(data); // Actualizar el estado con las preguntas de opciones
-        console.log(data)
-      } catch (err) {
-        console.error("Error fetching survey data:", err);
-      }
-    };
-    fetchOptionQuestion();
-  }, [patientId]);
+        const checkboxResponse = await axios.get(`http://localhost:5001/api/question_checkboxes/${patientId}`);
+        const checkboxData = checkboxResponse.data;
+        setCheckboxQuestion(checkboxData);
 
-  useEffect(() => {
-    const fetchCheckboxQuestion = async () => {
-      try {
-        const response = await axios.get(`http://localhost:5001/api/question_checkboxes/${patientId}`);
-        const data = response.data;
+        const surveyResponse = await axios.get(`http://localhost:5001/api/patients/${patientId}/answers_14_days`);
+        console.log(surveyResponse.data, "surveyResponse.data from SurveyGraph");
+        const surveyData = surveyResponse.data;
 
-        setCheckboxQuestion(data);
-        console.log(data)
-      } catch (err) {
-        console.error("Error fetching survey data:", err);
-      }
-    };
-    fetchCheckboxQuestion();
-  }, [patientId]);
-
-  useEffect(() => {
-
-    const fetchSurveyData = async () => {
-      try {
-        const response = await axios.get(`http://localhost:5001/api/patients/${patientId}/answers_14_days`);
-        const data = response.data;
-
-        const filteredData = data.filter(
+        const filteredData = surveyData.filter(
           (item) => item.question !== "No data" && item.answer !== "N/A"
         );
+
 
         const days = Array.from({ length: filteredData.length }, (_, index) => ({
           day: `Day ${index + 1}`,
@@ -67,9 +54,8 @@ function SurveyGraph({ patientId, theme }) {
         }));
 
         const processedQuestions = filteredData.map((item, index) => {
-          console.log(optionQuestions.find(option => option.answer === item.answer))
-          const isOption = optionQuestions.find(option => option.answer === item.answer);
-          const isCheckbox = checkboxQuestions.find(check => check.question === item.question);
+          const isOption = optionData.find(option => option.answer === item.answer);
+          const isCheckbox = checkboxData.find(check => check.question === item.question);
           if (item.question.includes("0 =")) {
             const type = "range";
             const questionWithoutScale = item.question.split("0 =")[0].trim();
@@ -101,17 +87,20 @@ function SurveyGraph({ patientId, theme }) {
               type,
             };
           }
-        }).filter(Boolean); // Filtrar valores nulos
+        }).filter(Boolean);
 
         setLabels(processedQuestions.map((item) => item.answer));
         setSurveyData(processedQuestions);
       } catch (err) {
-        console.error("Error fetching survey data:", err);
+        console.error("Error fetching data for patient:", err);
       }
     };
 
-    fetchSurveyData();
-  }, [patientId, optionQuestions]);
+    if (patientId) {
+      fetchDataForPatient();
+    }
+    console.log(patientId, "patientId from SurveyGraph");
+  }, [patientId]);
 
   useEffect(() => {
     if (chartRef.current) {
@@ -127,7 +116,7 @@ function SurveyGraph({ patientId, theme }) {
           label: "",
           data: reactionData,
           borderColor: "#FF0000",
-          backgroundColor:"#FF0000",
+          backgroundColor: "#FF0000",
           borderWidth: 2,
           tension: 0.4,
           fill: false,
@@ -197,6 +186,14 @@ function SurveyGraph({ patientId, theme }) {
     };
   }, []);
 
+  useEffect(() => {
+    const filtered = uniqueQuestions
+      .map((q, index) => ({ ...q, originalIndex: index }))
+      .filter((q) => filterType === "all" || q.type === filterType);
+
+    setFilteredQuestionsLocal(filtered);
+  }, [filterType, uniqueQuestions]);
+
   const renderOptionRectangles = (last14DaysAnswers) => {
     if (!last14DaysAnswers || last14DaysAnswers.length === 0) {
       return <div>Loading answers...</div>;
@@ -222,10 +219,9 @@ function SurveyGraph({ patientId, theme }) {
               </div>
               <div
                 style={{
-                  padding: ".5rem",
                   border: "1px solid gray",
                   borderRadius: ".5rem",
-                  color: theme.name === "highcon" ? "white" : "black",
+                  color: theme.colors.statcardtext,
                 }}
               >
                 {answer || "No answer"}
@@ -237,27 +233,24 @@ function SurveyGraph({ patientId, theme }) {
     );
   };
 
-  const uniqueQuestions = surveyData.filter(
-    (item, index, self) =>
-      self.findIndex((q) => q.question === item.question) === index
-  );
-
-  const filteredQuestions = uniqueQuestions
-    .map((q, index) => ({ ...q, originalIndex: index }))
-    .filter((q) => filterType === "all" || q.type === filterType);
-
   const handleDotClick = (index) => {
-    console.log(theme.name);
-    const originalIndex = filteredQuestions[index].originalIndex; // Obtener índice original
-    const selectedQuestion = uniqueQuestions[originalIndex]; // Usar índice original
+    const originalIndex = filteredQuestions[index].originalIndex;
+    const selectedQuestion = uniqueQuestions[originalIndex];
 
     const id = selectedQuestion.id;
     const selected = selectedQuestion.question;
-    console.log(selectedQuestion.answer);
     const selectedType = selectedQuestion.type;
 
+    console.log(selectedQuestion.id);
+
     setSelectedAnswer(selectedQuestion.answer);
+    setSelectedQuestionLocal(selected);
+    setIsQuestionSelected(true);
+
+    setSelectedQuestionId(id);
     setSelectedQuestion(selected);
+    console.log(selectedQuestion.response_limit);
+    setQuestionLimitResponse(selectedQuestion.response_limit);
 
     if (selectedType === "range") {
       setIsRange(true);
@@ -275,7 +268,6 @@ function SurveyGraph({ patientId, theme }) {
         .map((item) => item.answer);
 
       setReactionData(last14DaysAnswers);
-      setIsQuestionSelected(true);
       return;
     } else if (selectedType === "checkbox") {
       setIsCheckbox(true);
@@ -288,7 +280,6 @@ function SurveyGraph({ patientId, theme }) {
         .map((item) => item.answer);
 
       setReactionData(last14DaysAnswers);
-      setIsQuestionSelected(true);
       return;
     } else {
       setIsText(true);
@@ -306,20 +297,17 @@ function SurveyGraph({ patientId, theme }) {
       answer: filteredData[i] || 0,
     }));
 
-    console.log(selectedType);
     setReactionData(days.map((day) => day.answer));
     setLabels(days);
-    setIsQuestionSelected(true);
   };
 
   const resetGraph = () => {
-    setSelectedQuestion(null);
+    setSelectedQuestionLocal(null);
     setIsQuestionSelected(false);
     setReactionData(surveyData.map((item) => (item.is_reaction_question ? 1 : 0)));
     setLabels(surveyData.map((item) => item.answer));
   };
 
-  console.log(uniqueQuestions)
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 10px" }}>
@@ -327,7 +315,7 @@ function SurveyGraph({ patientId, theme }) {
           <button
             onClick={resetGraph}
             style={{
-              color: theme.name === "highcon" ? "white" : "black",
+              color: theme.colors.statcardtext,
               border: "none",
               backgroundColor: "transparent",
               cursor: "pointer",
@@ -338,28 +326,20 @@ function SurveyGraph({ patientId, theme }) {
           </button>
         )}
         <h2 style={{ margin: 0, textAlign: "center", flex: 1 }}>Survey Data Visualization</h2>
-        <div style={{ width: "1.5rem" }}></div> {/* Espacio vacío para equilibrar */}
+        <div style={{ width: "1.5rem" }}></div>
       </div>
       {isQuestionSelected && (
         <div style={{ marginBottom: "20px", textAlign: "center" }}>
           Questions:
           <div style={{ marginBottom: "20px", display: "flex", justifyContent: "center" }}>
-            {uniqueQuestions.map((_, index) => (
+            {filteredQuestions.map((_, index) => (
               <div
                 key={index}
-                onClick={() => handleDotClick(index)} // Manejar clic en el punto
+                onClick={() => handleDotClick(index)}
                 style={{
                   width: "10px",
                   height: "10px",
-                  backgroundColor: theme.name === "green"
-                    ? "#779CA0" 
-                    : theme.name === "blue"
-                      ? "#89ABC5" 
-                      : theme.name === "dark"
-                        ? "#3F4858" 
-                        : theme.name === "highcon"
-                          ? "rgb(226, 225, 225)" 
-                          : "#CCCCCC", 
+                  backgroundColor: theme.colors.statcardtext,
                   borderRadius: "50%",
                   margin: "0 5px",
                   cursor: "pointer",
@@ -372,7 +352,6 @@ function SurveyGraph({ patientId, theme }) {
         </div>
       )}
 
-
       {!isQuestionSelected && !selectedQuestion && (
         <div style={{ marginBottom: "20px", textAlign: "center" }}>
           <h3>Select a Question:</h3>
@@ -381,7 +360,10 @@ function SurveyGraph({ patientId, theme }) {
             <select
               id="filterType"
               value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
+              onChange={(e) => {
+                setLocalFilterType(e.target.value);
+                setFilterType(e.target.value);
+              }}
             >
               <option value="all">All</option>
               <option value="range">Range</option>
@@ -415,21 +397,26 @@ function SurveyGraph({ patientId, theme }) {
           </div>
         </div>
       )}
-      {selectedQuestion && (isOption || isCheckbox) && (
-        <div style={{ marginBottom: "20px", textAlign: "center" }}>
-          {renderOptionRectangles(reactionData)}
-        </div>
+
+      {!questionLimitResponse && (
+        <>
+          {selectedQuestion && (isOption || isCheckbox) && (
+            <div style={{ marginBottom: "20px", textAlign: "center" }}>
+              {renderOptionRectangles(reactionData)}
+            </div>
+          )}
+          {selectedQuestion && !(isOption || isCheckbox) && (
+            <canvas id="surveyGraph" width="400" height="200"></canvas>
+          )}
+        </>
       )}
-      {selectedQuestion && !(isOption || isCheckbox || isText) && (
-        <canvas id="surveyGraph" width="400" height="200"></canvas>
-      )}
-      {selectedQuestion && isText && (
+      {questionLimitResponse && (
         <div style={{ marginBottom: "20px", textAlign: "center" }}>
-          {console.log("Tipo: " + selectedQuestion)}
           <h3>Answer:</h3>
           <p>{selectedAnswer}</p>
         </div>
       )}
+
     </div>
   )
 }

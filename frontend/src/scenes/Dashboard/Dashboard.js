@@ -30,8 +30,6 @@ import {
 import {
   highcon,
   dark,
-  blue,
-  green,
 } from "../../components/styles/Theme.styled";
 import { Container } from "../../components/styles/DashboardComponents.styled";
 import Badge from "react-bootstrap/Badge";
@@ -60,6 +58,8 @@ import BadgeIcon from "../../components/PatientBadge/BadgeIcon";
 import Papa from 'papaparse';
 import SurveyGraph from "../../components/Graph/surveyGraph";
 import PatientList from "../../components/Graph/PatientList";
+import BadgeData from "../../components/PatientBadge/BadgeData";
+import { da } from "date-fns/locale";
 
 /**
  * 
@@ -82,6 +82,11 @@ function DashboardBody({
   goals,
   userData,
   prevWeek,
+  setFilterType,
+  setFilteredQuestions,
+  setSelectedQuestion,
+  setSelectedQuestionId,
+  selectedQuestionId,
 }) {
   //const handleTypeChange
   const [publicData, setPublicData] = useState(false);
@@ -89,6 +94,26 @@ function DashboardBody({
   const [isMainActive, setIsMainActive] = useState(true);
   const [isGlucoseActive, setIsGucoseActive] = useState(false);
   const [isSurveyActive, setIsSurveyActive] = useState(false);
+
+  const handleFilterTypeChange = (newFilterType) => {
+    //console.log("Filter type changed to:", newFilterType);
+    setFilterType(newFilterType);
+  };
+
+  const handleFilteredQuestionsChange = (questions) => {
+    //console.log("Filtered questions:", questions);
+    setFilteredQuestions(questions);
+  };
+
+  const handleSelectedQuestionChange = (question) => {
+    //console.log("Selected question:", question);
+    setSelectedQuestion(question);
+  };
+
+  const handleSelectedQuestionChangeId = (id) => {
+    console.log("Selected question:", id);
+    setSelectedQuestionId(id);
+  };
 
   const activeIndex = isMainActive ? 0 : isGlucoseActive ? 1 : 2;
 
@@ -157,7 +182,6 @@ function DashboardBody({
   function ToggleButtons() {
     const handleClick = (event, publicDataVal) => {
       if (publicDataVal !== null) {
-        console.log(!publicData);
         setPublicData(!publicData);
       }
     };
@@ -180,374 +204,23 @@ function DashboardBody({
     );
   }
 
-
-  /*function ImportDataModal({ onClose, onSubmit }) {
-    const [error, setError] = useState(null);
-    const [csvData, setCsvData] = useState([]);
-    const [headers, setHeaders] = useState([]);
-    const [answers, setAnswers] = useState({});
-    const [mark, setMark] = useState(5);
-
-    const handleFileChange = (e) => {
-      const file = e.target.files[0];
-      if (file && file.type === 'text/csv') {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          try {
-            Papa.parse(event.target.result, {
-              complete: (result) => {
-                setHeaders(result.meta.fields);
-                setCsvData(result.data);
-                const initialAnswers = {};
-                result.data.forEach((row, index) => {
-                  initialAnswers[index] = '';
-                });
-                setAnswers(initialAnswers);
-                ;
-              },
-              header: true,
-              skipEmptyLines: true,
-            });
-          } catch (err) {
-            setError('Error al parsear el CSV');
-          }
-        };
-        reader.onerror = () => {
-          setError('Error al leer el archivo');
-        };
-        reader.readAsText(file);
-      } else {
-        setError("El archivo no es un CSV");
-      }
-    };
-
-    const handleAnswerChange = (index, value) => {
-      setAnswers((prev) => ({ ...prev, [index]: value }));
-      setMark(value)
-    };
-
-    const handleFormSubmit = (e) => {
-      e.preventDefault();
-      onSubmit(answers);
-    };
-    function getBetween(str, startChar, endChar) {
-      const startIndex = str.indexOf(startChar);
-      const endIndex = str.indexOf(endChar);
-
-      if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
-        return str.substring(startIndex + 1, endIndex);
-      }
-      return '';
-    }
-
-    return (
-      <div
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 1000,
-        }}
-      >
-        <div
-          style={{
-            backgroundColor: 'white',
-            padding: '20px',
-            borderRadius: '8px',
-            width: '80%',
-            maxWidth: '600px',
-            overflowY: 'auto',
-            maxHeight: '80vh',
-          }}
-        >
-          <h3 style={{ color: 'black' }}>Import data</h3>
-          <input
-            style={{ width: "100%" }}
-            type="file"
-            accept=".csv"
-            onChange={handleFileChange}
-          />
-          {error && <p style={{ color: 'red' }}>{error}</p>}
-
-          {csvData.length > 0 && (
-            <form onSubmit={handleFormSubmit}>
-              {csvData.map((row, index) => {
-                const questionText = row["question"];
-                var question;
-                var smallValue;
-                var bigValue;
-                const isSlider = questionText.includes("0 = ");
-                if (questionText.includes("0 = ")) {
-                  console.log(questionText);
-                  var index = questionText.indexOf("0 = ");
-                  if (index !== -1) {
-                    question = questionText.substring(0, index);
-                  }
-                  smallValue = getBetween(questionText, "=", "10");
-                  index = questionText.indexOf("10 =");
-                  if (index !== -1) {
-                    bigValue = questionText.substring(index + 4);
-                  }
-                  console.log("Palabra = " + questionText + " + " + questionText.charAt(questionText.length - 1))
-                } else {
-                  question = questionText;
-                }
-
-
-                return (
-                  <div key={index} style={{ marginBottom: '1rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', color: 'black' }}>
-                      {question}
-                    </label>
-                    {isSlider ? (<>
-                      <input
-                        type="range"
-                        min="0"
-                        max="10"
-                        value={answers[index] || 0}
-                        onChange={(e) => handleAnswerChange(index, e.target.value)}
-                      />
-                      <div style={{ color: "black", flexWrap: "wrap", display: "flex", width: "100%", gap: "4rem" }}>
-                        <span style={{ width: "40%" }}>{smallValue}</span>
-                        <span style={{ width: "40%" }}>{bigValue}</span>
-                      </div>
-                    </>
-                    ) : (
-                      <select
-                        value={answers[index] || ''}
-                        onChange={(e) => handleAnswerChange(index, e.target.value)}
-                        style={{ width: '100%', padding: '8px' }}
-                      >
-                        <option value="">Seleccionar...</option>
-                        <option value="opcion1">Opción 1</option>
-                        <option value="opcion2">Opción 2</option>
-                        <option value="opcion3">Opción 3</option>
-                        <option value="opcion4">Opción 4</option>
-                      </select>
-                    )}
-                  </div>
-                );
-              })}
-              <div style={{ marginTop: '10px', textAlign: 'left' }}>
-                <button type="submit" style={{ marginRight: "0.5rem" }}>
-                  Send
-                </button>
-                <button type="button" onClick={onClose}>
-                  Close
-                </button>
-              </div>
-            </form>
-          )}
-          {csvData.length == 0 && (
-            <button style={{ marginTop: "1rem", display: "flex", left: "0" }} type="button" onClick={onClose}>
-              Close
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  function Patients({ onClose, }) {
-    const [idPatiente, setIdPatient] = useState("");
-    const [patientData, setPatientData] = useState([]);
-    const [dataAlert, setDataAlert] = useState(false);
-    const [idClinician, setIdClinician] = useState("");
-    const [idUser, setIdUser] = useState("");
-    const [patients, setPatients] = useState([]);
-    const [patientSelected, setPatientSelected] = useState([]);
-    const [show, setShow] = useState(false);
-    const [loading, setLoading] = useState(false);
-
-    const getPatients = async () => {
-      setIdClinician(localStorage.getItem("clinicianId"));
-      console.log(idClinician)
-      if (!idClinician) {
-        alert("Please, introduce a valid clinician id");
-        return;
-      }
-      setLoading(true);
-      setPatients([]);
-
-      try {
-        const response = await fetch(`http://localhost:5001/api/clinicians/${idClinician}/up_users`);
-        if (!response.ok) {
-          throw new Error('Error getting the users');
-        }
-        const data = await response.json();
-        setPatients(data);
-        setShow(true);
-      } catch (e) {
-        console.error(e);
-        alert("Is not posible load the patients")
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const dataPatientSelected = (e) => {
-      const id = e.target.value;
-      const patient = patients.find((p) => p.id.toString() === id);
-      setPatientSelected(patient);
-    }
-
-    const data = () => {
-      setDataAlert(true)
-    }
-
-    const close = () => {
-      setDataAlert(false)
-    }
-
-    const handleFormSubmit = (e) => {
-      e.preventDefault();
-      setIdUser(e.target.value)
-    };
-
-
-    useEffect(() => {
-      setIdPatient(10);
-      if (patientSelected) {
-        fetch(`http://localhost:5001/api/up_users/${idPatiente}`)
-          .then(response => response.json())
-          .then(data => setPatientData(data))
-          .catch(error => console.error("Error fetching patient data"));
-      }
-    }, [patientSelected])
-
-    const DataPatients = ({ data }) => {
-      return (
-        <div className="patient-table">
-          <h2>Patient Data</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Username</th>
-                <th>Sleep Value</th>
-                <th>Sleep Target</th>
-                <th>Steps</th>
-                <th>Calories Value</th>
-                <th>Calories Target</th>
-                <th>Intensity</th>
-                <th>Min Heart Rate</th>
-                <th>Max Heart Rate</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((data, index) => (
-                <tr key={index}>
-                  <td>{data.id}</td>
-                  <td>{data.username}</td>
-                  <td>{data.sleep_value}</td>
-                  <td>{data.sleep_target}</td>
-                  <td>{data.steps}</td>
-                  <td>{data.calories_value}</td>
-                  <td>{data.calories_target}</td>
-                  <td>{data.intensity}</td>
-                  <td>{data.min_heart_rate}</td>
-                  <td>{data.max_heart_rate}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )
-    }
-
-    return (
-      <div
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 1000,
-        }}
-      >
-        <div style={{
-          width: "100%",
-          color: "black",
-          backgroundColor: 'white',
-          padding: '20px',
-          borderRadius: '8px',
-          width: '80%',
-          maxWidth: '600px',
-          overflowY: 'auto',
-          maxHeight: '80vh',
-        }}>
-          <h2 className="text-xl font-bold mb-4">Select a patient</h2>
-          <button
-            className="bg-blue-600 text-white px-4 py-2 rounded w-full"
-            onClick={getPatients}
-            disabled={loading}
-          >
-            {loading ? 'Searching...' : "Show patients"}
-          </button>
-
-          {patients.length > 0 && (
-            <>
-              <form onSubmit={handleFormSubmit}>
-                <select
-                  className="border px-3 py-2 rounded w-full mb-4"
-                  onChange={dataPatientSelected}
-                  defaultValue=""
-                >
-                  <option value="" disabled>
-                    -- Choose a patient --
-                  </option>
-                  {patients.map((patient) => (
-                    <option key={patient.id} value={patient.id}>
-                      {patient.username}
-                    </option>
-                  ))}
-                </select>
-                {dataAlert && (
-                  <DataPatients data={patientData} />
-                )}
-
-                <div>
-                  <button type="button" onClick={data}>
-                    Show data
-                  </button>
-                  <button type="button" onClick={onClose}>
-                    Close
-                  </button>
-                </div>
-              </form>
-            </>
-          )}
-        </div>
-      </div>
-    )
-  }*/
-
-
   function ToggleSwitch({ isMainActive, isGlucoseActive, isSurveysActive, onToggle, activeIndex: initialActiveIndex }) {
     const [activeIndex, setActiveIndex] = useState(initialActiveIndex);
 
     useEffect(() => {
-      setActiveIndex(initialActiveIndex); // Sincronizar con el índice activo inicial
+      setActiveIndex(initialActiveIndex);
     }, [initialActiveIndex]);
 
     const handleClick = (index) => {
       setActiveIndex(index);
       if (index === 0) {
+        console.log("Main active");
         onToggle(true, false, false);
       } else if (index === 1) {
+        console.log("Glucose active");
         onToggle(false, true, false);
       } else if (index === 2) {
+        console.log("Surveys active");
         onToggle(false, false, true);
       }
     };
@@ -760,19 +433,23 @@ function DashboardBody({
                       }
                       goal={goals.intensityGoal}
                     ></OverviewStatCard>
-                    <GoalCard goalData={goals.stepsGoal} />
-                    <GoalCard goalData={goals.sleepGoal} />
+                    <GoalCard goalData={goals.stepsGoal} hr={null}/>
+                    <GoalCard goalData={goals.sleepGoal} hr={null}/>
 
                     <GoalCard
                       goalData={diabetesData ? goals.glucoseValue : goals.intensityGoal}
                       goals={goals}
                       type={"last"}
+                      hr={null}
                     />
                     <GoalCard
                       goalData={publicData ? goals.heartRate : goals.caloriesGoal}
                       goals={goals}
                       type={"last"}
-                    />
+                      hr={publicData ? true : null}
+                      maxHeartRate = {userData.dataMaxReartRate}
+                      minHeartRate = {userData.dataMinReartRate}
+                    />{console.log("Public data" + userData.dataMaxReartRate)}
                   </CardRowThemed>
                 </>
               ) : (
@@ -798,6 +475,7 @@ function DashboardBody({
               {
                 isMainActive ? (
                   <FormControlThemed
+                  style={{backgroundColor: selectedTheme.colors.cardHolders}}
                     sx={{
                       marginBottom: "0.2em",
                       width: "9vw",
@@ -815,7 +493,7 @@ function DashboardBody({
                             fontSize: "0.8em",
 
                             alignSelf: "center",
-                            color: selectedTheme.colors.headertext,
+                            color: selectedTheme.colors.statcardtitles,
                           }}
                         />
                       }
@@ -933,7 +611,14 @@ function DashboardBody({
               <BreakdownCardHolder>
                 <div className={"Breakdown"}>
                   <GraphCard>
-                    <SurveyGraph patientId={10} theme={selectedTheme} />
+                    <SurveyGraph
+                      patientId={10}
+                      theme={selectedTheme}
+                      setFilterType={handleFilterTypeChange}
+                      setFilteredQuestions={handleFilteredQuestionsChange}
+                      setSelectedQuestion={handleSelectedQuestionChange}
+                      setSelectedQuestionId={handleSelectedQuestionChangeId}
+                    />
                   </GraphCard>
 
                   <div
@@ -944,7 +629,11 @@ function DashboardBody({
                     }}
                   >
                     <StatsBox>
-                      <PatientList clinicianId={localStorage.getItem("clinicianId")} />
+                      <PatientList
+                        clinicianId={localStorage.getItem("clinicianId")}
+                        selectedQuestionId={selectedQuestionId}
+                        selectedPatient={localStorage.getItem("patientId")}
+                      />
                     </StatsBox>
                   </div>
                 </div>
@@ -952,11 +641,18 @@ function DashboardBody({
             ) : null}
           </div>
         </div>
-        <div style={{ width: "12.5vw", paddingTop: "3vh" }}>
-          <BadgeIcon
+        <div style={{ width: "14.5vw", paddingTop: "3vh" }}>
+          {/*<BadgeIcon
             theme={selectedTheme}
             name={userData.name}
             userID={userID}
+          />*/}
+          <BadgeData
+          name={localStorage.getItem("patientName")}
+          theme={selectedTheme}   
+          email={localStorage.getItem("email")}
+          group={group}
+          userId={localStorage.getItem("patientId")}
           />
         </div>
       </div>
@@ -967,8 +663,15 @@ function DashboardBody({
 
 
 export const Dashboard = () => {
+  const [maxHeartRate, setMaxHeartRate] = useState(0);
+  const [minHeartRate, setMinHeartRate] = useState(0);
+  const [averageHeartRate, setAverageHeartRate] = useState(0);
+  const [filterType, setFilterType] = useState("all");
+  const [filteredQuestions, setFilteredQuestions] = useState([]);
+  const [selectedQuestion, setSelectedQuestion] = useState(null);
+  const [selectedQuestionId, setSelectedQuestionId] = useState(null);
   const location = useLocation();
-  const [selectedTheme, setSelectedTheme] = useState(blue);
+  const [selectedTheme, setSelectedTheme] = useState(dark);
   const [userData, setUserData] = useState({
     name: "",
     steps: 0,
@@ -978,7 +681,7 @@ export const Dashboard = () => {
     calories: 0,
     calorieTarget: 0,
     intensity: 0,
-    intensityTarget: 150, // (from World Health Org)
+    intensityTarget: 150,
     minHeartRate: 0,
     maxHeartRate: 0,
     avModHighIntensityHr: 89,
@@ -1066,6 +769,10 @@ export const Dashboard = () => {
         Axios.get(preUrl + "/api/ht_month_av", { params }),
       ]);
 
+      console.log(response.data)
+
+
+
       setUserData((prevUserData) => ({
         ...prevUserData,
         name: response.data.name,
@@ -1091,7 +798,9 @@ export const Dashboard = () => {
         avModHighIntensityHr: 89,
         avModHighIntensityHrTarget: 101,
         avMaxHr: avMaxHrResponse.data.average,
-        glucoseValue: response.data.glucoseValues[response.data.glucoseValues.length - 1]
+        glucoseValue: response.data.glucoseValues[response.data.glucoseValues.length - 1],
+        dataMaxReartRate: response.data.high_hr,
+        dataMinReartRate: response.data.low_hr
       }));
 
       setUserData((prevUserData) => ({
@@ -1152,6 +861,7 @@ export const Dashboard = () => {
 
       if (currentTheme) {
         setSelectedTheme(currentTheme);
+        console.log("Current theme:", currentTheme);
       }
     };
 
@@ -1219,8 +929,6 @@ export const Dashboard = () => {
   if (loading) {
     // Render a loading spinner or message while data is being fetched
     return <p>Loading...</p>;
-  } else {
-    console.log("LOADED");
   }
 
   // Renders full dashboard screen
@@ -1234,7 +942,11 @@ export const Dashboard = () => {
           navigateReturn={navigateReturn}
           selectedTheme={selectedTheme}
           setSelectedTheme={setSelectedTheme}
-          activeIndex={2}
+          activeIndex={0}
+          filterType={filterType}
+          filteredQuestions={filteredQuestions}
+          selectedQuestion={selectedQuestion}
+          selectedQuestionId={selectedQuestionId}
         />
         <DashboardBody
           filterMode={filterMode}
@@ -1245,6 +957,11 @@ export const Dashboard = () => {
           userData={userData}
           goals={goals}
           prevWeek={prevWeek}
+          setFilterType={setFilterType}
+          setFilteredQuestions={setFilteredQuestions}
+          setSelectedQuestion={setSelectedQuestion}
+          setSelectedQuestionId={setSelectedQuestionId}
+          selectedQuestionId={selectedQuestionId}
         />
         <Footer style={{ zIndex: 1 }} />
       </div>
@@ -1264,8 +981,6 @@ function prodPercentageString(prevWeek, thisWeek) {
 }
 
 function calculateAverageWithoutZeros(list) {
-  console.log("list:");
-  console.log(list);
   const filteredList = list.filter((element) => element !== 0);
 
   if (filteredList.length === 0) {

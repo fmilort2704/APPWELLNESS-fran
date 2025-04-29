@@ -8,10 +8,10 @@ const { ConnectingAirportsOutlined } = require("@mui/icons-material");
 
 const pool = new Pool({
   user: "postgres",
-  host: "localhost", 
+  host: "localhost",
   database: "copia_active",
-  password: "veloz3000", 
-  port: 5432, 
+  password: "veloz3000",
+  port: 5432,
 });
 
 require("dotenv").config();
@@ -20,19 +20,6 @@ require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 5001;
 const STRAPI_API_URL = "localhost:1337";
-
-app.get('/get-csv', (req, res) => {
-  const filePath = 'C:/Proyectos/components_survey_answers.csv';
-
-  fs.readFile(filePath, 'utf8', (err, data) => {
-    if (err) {
-      return res.status(500).send('Error al leer el archivo');
-    }
-
-    res.setHeader('Content-Type', 'text/csv');
-    res.send(data);
-  });
-});
 
 
 console.log("server is running on port " + port);
@@ -150,7 +137,7 @@ app.get("/api/clinicians/:id/up_users", async (req, res) => {
   const { id } = req.params;
 
   try {
-    const query = `
+    const result = await pool.query(`
       SELECT up_users.id, up_users.username 
       FROM up_users 
       JOIN up_users_clinician_links 
@@ -158,9 +145,8 @@ app.get("/api/clinicians/:id/up_users", async (req, res) => {
       JOIN clinicians 
         ON clinicians.id = up_users_clinician_links.clinician_id 
       WHERE clinicians.id = $1
-    `;
+    `, [id]);
 
-    const result = await db.query(query, [id]);
     console.log("Query result:", result.rows);
 
     res.json(result.rows);
@@ -208,8 +194,9 @@ ORDER BY question, id ASC;
   }
 });
 
-app.get("/api/patients/:patientId/answers", async (req, res) => {
+app.get("/api/patients/:patientId/:questionId/answers", async (req, res) => {
   const patientId = req.params.patientId;
+  const question_id = req.params.questionId;
 
   try {
     const result = await pool.query(`
@@ -223,10 +210,9 @@ JOIN
 JOIN 
     public.answers_user_links aul ON caa.id = aul.answer_id
 WHERE 
-    aul.user_id = $1
+    aul.user_id = $1 and csa.id = $2
 ORDER BY csa.id desc 
-LIMIT 3;
-    `, [patientId]);
+    `, [patientId, question_id]);
 
     console.log("Query result: " + result.rows);
 
@@ -240,14 +226,14 @@ LIMIT 3;
 app.get("/api/patients/:patientId/answers_14_days", async (req, res) => {
   const patientId = req.params.patientId;
 
-  console.log("Solicitud recibida en /api/patients/:patientId/answers_14_days");
   try {
     const result = await pool.query(`
-      SELECT 
+    SELECT 
     aul.user_id,
     csa.id,
     csa.question,
-    caa.answer
+    caa.answer,
+    csa.response_limit
 FROM 
     public.components_answer_answers caa
 JOIN 
@@ -275,12 +261,11 @@ app.get("/api/patients/:patientId/:surveyId/answers_14_days", async (req, res) =
   const patientId = req.params.patientId;
   const surveyId = req.params.surveyId;
 
-  console.log("Solicitud recibida en /api/patients/:patientId/answers_14_days");
   try {
     const result = await pool.query(`
       SELECT
-	csal.survey_id,
-	s.title,
+	  csal.survey_id,
+	  s.title,
     csa.id,
     csa.question,
     caa.answer
@@ -331,10 +316,10 @@ WHERE
     aul.user_id = $1 and caa.answer = cso.label
 ORDER BY caa.answer asc 
       `, [patientId]);
-      res.json(result.rows)
-  } catch (e) { 
+    res.json(result.rows)
+  } catch (e) {
     console.error("Error getting the questions", e);
-    res.status(500).json({error: "Error getting the questions"})
+    res.status(500).json({ error: "Error getting the questions" })
   }
 });
 
@@ -358,10 +343,10 @@ WHERE
     aul.user_id = $1 and csa.question = csc.question
 ORDER BY csa.question asc  
       `, [patientId]);
-      res.json(result.rows)
-  } catch (e) { 
+    res.json(result.rows)
+  } catch (e) {
     console.error("Error getting the questions", e);
-    res.status(500).json({error: "Error getting the questions"})
+    res.status(500).json({ error: "Error getting the questions" })
   }
 });
 
@@ -375,12 +360,41 @@ from component_survey_answer_link csal
 join components_answer_answers caa on csal.answer_id = caa.id
 where csal.question_id = $1
       `, [questionId]);
-      res.json(result.rows)
-  } catch (e) { 
+    res.json(result.rows)
+  } catch (e) {
     console.error("Error getting the questions", e);
-    res.status(500).json({error: "Error getting the questions"})
+    res.status(500).json({ error: "Error getting the questions" })
   }
 });
+
+app.get("/api/badgeData/:id/up_users", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query(`
+      SELECT up_users.id, up_users.full_name, up_users.email, groups_users_links.group_id, groups.title, up_users.photo
+      FROM up_users 
+      JOIN up_users_clinician_links 
+        ON up_users.id = up_users_clinician_links.user_id 
+      JOIN clinicians 
+        ON clinicians.id = up_users_clinician_links.clinician_id 
+		  JOIN groups_users_links
+		    ON up_users.id = groups_users_links.user_id
+      JOIN groups
+        ON groups.id = groups_users_links.group_id
+      WHERE up_users.id = $1
+    `, [id]);
+
+    console.log("Query result:", result.rows);
+
+    res.json(result.rows);
+  } catch (e) {
+    console.error('Error getting the users', e);
+    res.status(500).json({ error: "Error getting the users of a clinician" })
+  }
+});
+
+
 
 
 // queries the database for app user ids and refetches all user data

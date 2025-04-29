@@ -17,10 +17,8 @@ import { Padding, Redeem } from "@mui/icons-material";
 import { OverviewCard } from "../styles/DashboardComponents.styled";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import {
-  highcon,
+  light,
   dark,
-  blue,
-  green,
 } from "../../components/styles/Theme.styled";
 
 // Stat card component to show the generic patient stats
@@ -165,31 +163,19 @@ function checkDiff(diff) {
 }
 
 const getColour = (props) => {
-  if (props.selectedTheme === green) {
-    return "black";
-  }
-  if (props.selectedTheme === blue) {
-    return "black";
-  }
   if (props.selectedTheme === dark) {
     return "white";
   }
-  if (props.selectedTheme === highcon) {
+  if (props.selectedTheme === light) {
     return "white";
   }
 };
 
 const getColour2 = (props) => {
-  if (props.selectedTheme === green) {
-    return "#424242";
-  }
-  if (props.selectedTheme === blue) {
-    return "#424242";
-  }
   if (props.selectedTheme === dark) {
     return "#CACACA";
   }
-  if (props.selectedTheme === highcon) {
+  if (props.selectedTheme === light) {
     return "#CACACA";
   }
 };

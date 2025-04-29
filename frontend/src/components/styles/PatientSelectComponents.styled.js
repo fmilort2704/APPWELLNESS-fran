@@ -13,7 +13,7 @@ import InputBase from "@mui/material/InputBase";
 
 export const PatientCardThemed = styled.button`
   background-color: ${({ theme }) => theme.colors.overviewbackground};
-  color: ${({ theme }) => theme.colors.statcardtext};
+  color: ${({ theme }) => theme.colors.overviewstat};
   border-radius: 20px;
   border: none;
 `;
@@ -39,10 +39,10 @@ export const PatientTableThemed = styled(Table)`
   overflow: auto;
 `;
 export const PatientTableHeadThemed = styled(TableHead)`
-  background-color: ${({ theme }) => theme.colors.header};
+  background-color: ${({ theme }) => theme.colors.overviewbackground};
 `;
 export const PatientTableRowThemed = styled(TableRow)`
-  background-color: ${({ theme }) => theme.colors.sidebar};
+  background-color: ${({ theme }) => theme.colors.overviewbackground};
 `;
 export const PatientTableCellThemed = styled(TableCell)`
   padding: 8px;
@@ -55,7 +55,7 @@ export const PatientTableFootThemed = styled(TableFooter)`
   height: 10px;
   z-index:1;
   position: 'sticky'
-  background-color: ${({ theme }) => theme.colors.header}
+  background-color: ${({ theme }) => theme.colors.overviewbackground}
 `;
 export const FormControlThemed = styled(FormControl)`
   height: 3vh;
@@ -63,7 +63,7 @@ export const FormControlThemed = styled(FormControl)`
   width: 5vw;
   font-size: 40px;
   border-radius: 0.2vw;
-  background-color: ${({ theme }) => theme.colors.sidebar};
+  background-color: ${({ theme }) => theme.colors.overviewbackground};
 `;
 
 export const FormInputThemed = styled(InputBase)`

@@ -29,10 +29,8 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import { jsPDF } from "jspdf";
 import { ConfirmationDialogRaw } from "../Sidebar/Settings";
 import {
-  highcon,
+  light,
   dark,
-  blue,
-  green,
 } from "../../components/styles/Theme.styled";
 import { ThemeProvider } from "styled-components";
 import { icons } from "react-icons/lib";
@@ -96,7 +94,12 @@ export function Header({
   setSelectedTheme,
   institutionName,
   activeIndex,
+  filterType,
+  filteredQuestions,
+  selectedQuestion,
+  selectedQuestionId,
 }) {
+  //console.log("Header", selectedQuestionId);
   const [userData, setUserData] = useState([]);
   const location = useLocation();
   const navigate = useNavigate();
@@ -130,16 +133,15 @@ export function Header({
           let params = {
             id: location.state.id,
           };
-          console.log(activeIndex)
           const apiUrl =
-          activeIndex !== 2
-            ? process.env.NODE_ENV === "production"
-              ? `/api/all_ap_user_data`
-              : `http://localhost:5001/api/all_ap_user_data`
-            : process.env.NODE_ENV === "production"
-            ? `/api/patients/${localStorage.getItem("patientId")}/answers_14_days`
-            : `http://localhost:5001/api/patients/${localStorage.getItem("patientId")}/answers_14_days`;
-
+            activeIndex !== 2
+              ? process.env.NODE_ENV === "production"
+                ? `/api/all_ap_user_data`
+                : `http://localhost:5001/api/all_ap_user_data`
+              : process.env.NODE_ENV === "production"
+                ? `/api/patients/${localStorage.getItem("patientId")}/answers_14_days`
+                : `http://localhost:5001/api/patients/${localStorage.getItem("patientId")}/answers_14_days`;
+          console.log("API URL:", apiUrl);
           const [userDataResponse] = await Promise.all([
             Axios.get(apiUrl, { params }),
           ]);
@@ -159,24 +161,35 @@ export function Header({
   }, [name, setSelectedTheme]);
 
   function DownloadJSON() {
-    console.log(userData[0])
+    /*console.log(userData[0])
     downloadFile({
       data: JSON.stringify(userData),
       fileName: activeIndex === 2
       ? "survey_user_id_" + userData[0].user_id + "'s_data.json"
       : "user_id_" + userData[0].user_id + "'s_data.json",
       fileType: "text/json",
+    });*/
+    console.log(userData.filter((user) => user.id === selectedQuestionId));
+    const dataToExport =
+      selectedQuestion === null ?
+        filterType !== "all" ? filteredQuestions : userData
+        : userData.filter((user) => user.id === selectedQuestionId);
+
+    downloadFile({
+      data: JSON.stringify(dataToExport),
+      fileName: "survey_user_id_10_answers.json",
+      fileType: "text/json",
     });
   }
 
   function DownloadCSV() {
     let headers, usersCsv;
-  
+
     if (activeIndex !== 2) {
       headers = [
         "user_id,sleep_target,sleep_value,steps,calories_target,calories_value,intensity,min_heart_rate,max_heart_rate,data_created_at,data_updated_at,data_created_by_id,data_updated_by_id,daily_step_goal",
       ];
-  
+
       usersCsv = userData.reduce((acc, user) => {
         const {
           user_id,
@@ -216,11 +229,28 @@ export function Header({
       }, []);
     } else {
       headers = ["user_id,id,question,answer"];
-      usersCsv = userData.reduce((acc, user) => {
-        const { user_id, id, question, answer } = user;
-        acc.push([user_id, id, question, answer].join(","));
-        return acc;
-      }, []);
+      if (selectedQuestion === null) {
+        if (filterType === "all") {
+          usersCsv = userData.reduce((acc, user) => {
+            const { user_id, id, question, answer } = user;
+            acc.push([user_id, id, question, answer].join(","));
+            return acc;
+          }, []);
+        } else {
+          usersCsv = filteredQuestions.reduce((acc, user) => {
+            const { user_id, id, question, answer } = user;
+            acc.push([user_id, id, question, answer].join(","));
+            return acc;
+          }, []);
+        }
+      } else {
+        console.log("User data", userData.filter((user) => user.question === selectedQuestion));
+        usersCsv = userData.filter((user) => user.question === selectedQuestion).reduce((acc, user) => {
+          const { user_id, id, question, answer } = user;
+          acc.push([user_id, id, question, answer].join(","));
+          return acc;
+        }, []);
+      }
     }
     downloadFile({
       data: [...headers, ...usersCsv].join("\n"),
@@ -272,7 +302,7 @@ export function Header({
         </div>
       </h2>
     );
-    
+
     // Renders export functionality
     exportButton = (
       <>
@@ -310,7 +340,7 @@ export function Header({
         <Divider />
       </>
     );
-    
+
     // Renders Exit Dashboard functionality
     exitButton = (
       <>
@@ -371,7 +401,6 @@ export function Header({
 
   const [openSettings, setOpenSettings] = React.useState(false); //holds visiblity state of settings popup
   let currentTheme = getTheme();
-  console.log(currentTheme);
   const [value, setValue] = React.useState(currentTheme); //holds current value of chosen theme by user
 
   const handleClickListItem = () => {
@@ -380,19 +409,7 @@ export function Header({
 
   // handles closing of settings and sets newly chosen theme
   const handleClose = (newValue) => {
-    console.log(newValue);
     setOpenSettings(false);
-
-    if (newValue === "Green") {
-      setValue(newValue);
-      setSelectedTheme(green);
-      localStorage.setItem("currentTheme", JSON.stringify(green));
-    }
-    if (newValue === "Blue") {
-      setValue(newValue);
-      localStorage.setItem("currentTheme", JSON.stringify(blue));
-      setSelectedTheme(blue);
-    }
     if (newValue === "Dark Mode") {
       setValue(newValue);
       localStorage.setItem("currentTheme", JSON.stringify(dark));
@@ -400,8 +417,8 @@ export function Header({
     }
     if (newValue === "High Contrast") {
       setValue(newValue);
-      localStorage.setItem("currentTheme", JSON.stringify(highcon));
-      setSelectedTheme(highcon);
+      localStorage.setItem("currentTheme", JSON.stringify(light));
+      setSelectedTheme(light);
     }
   };
 
