@@ -37,7 +37,7 @@ import { icons } from "react-icons/lib";
 import { LegendToggleRounded } from "@mui/icons-material";
 import { HelpGuide } from "../Sidebar/Help";
 import Axios from "axios";
-import { useLocation, useNavigate } from "react-router-dom";
+import { data, useLocation, useNavigate } from "react-router-dom";
 import { ExportPopup } from "../ExportPopup/ExportPopup";
 import ReactLoading from "react-loading";
 import ShieldIcon from "@mui/icons-material/Shield";
@@ -98,8 +98,26 @@ export function Header({
   filteredQuestions,
   selectedQuestion,
   selectedQuestionId,
+  filterMode,
+  startDate,
+  endDate,
 }) {
-  //console.log("Header", selectedQuestionId);
+  console.log("initial activeIndex", activeIndex);
+  function formatDate(date) {
+    if (!isNaN(date)) {
+      let yyyy = date.getFullYear();
+      let mm = String(date.getMonth() + 1).padStart(2, "0");
+      let dd = String(date.getDate()).padStart(2, "0");
+
+      return `${yyyy}-${mm}-${dd}`;
+    } else {
+      return null
+    }
+  }
+  startDate = formatDate(startDate);
+  endDate = formatDate(endDate);
+
+  console.log("Header", startDate + " " + endDate);
   const [userData, setUserData] = useState([]);
   const location = useLocation();
   const navigate = useNavigate();
@@ -135,9 +153,13 @@ export function Header({
           };
           const apiUrl =
             activeIndex !== 2
-              ? process.env.NODE_ENV === "production"
-                ? `/api/all_ap_user_data`
-                : `http://localhost:5001/api/all_ap_user_data`
+              ? activeIndex === 1
+                ? process.env.NODE_ENV === "production"
+                  ? `/api/all_ap_user_data`
+                  : `http://localhost:5001/api/all_ap_user_data`
+                : process.env.NODE_ENV === "production"
+                  ? `/api/weekly_data/${localStorage.getItem("patientId")}/${startDate}/${endDate}`
+                  : `http://localhost:5001/api/weekly_data/${localStorage.getItem("patientId")}/${startDate}/${endDate}`
               : process.env.NODE_ENV === "production"
                 ? `/api/patients/${localStorage.getItem("patientId")}/answers_14_days`
                 : `http://localhost:5001/api/patients/${localStorage.getItem("patientId")}/answers_14_days`;
@@ -158,76 +180,183 @@ export function Header({
       };
       fetchDataWrapper();
     }
-  }, [name, setSelectedTheme]);
+  }, [activeIndex, name, setSelectedTheme, startDate, endDate]);
 
   function DownloadJSON() {
-    /*console.log(userData[0])
-    downloadFile({
-      data: JSON.stringify(userData),
-      fileName: activeIndex === 2
-      ? "survey_user_id_" + userData[0].user_id + "'s_data.json"
-      : "user_id_" + userData[0].user_id + "'s_data.json",
-      fileType: "text/json",
-    });*/
-    console.log(userData.filter((user) => user.id === selectedQuestionId));
-    const dataToExport =
-      selectedQuestion === null ?
-        filterType !== "all" ? filteredQuestions : userData
-        : userData.filter((user) => user.id === selectedQuestionId);
+    let dataToExport;
+    if (activeIndex === 2) {
+      console.log("activeIndex", activeIndex);
+      if (selectedQuestion === null) {
+        if (filterType !== "all") {
+          dataToExport = userData.filter((user) =>
+            filteredQuestions.some((fq) => fq.question === user.question)
+          );
+        } else {
+          dataToExport = userData;
+        }
+      } else {
+        dataToExport = userData.filter((user) => user.question === selectedQuestion);
+      }
+    } else if (activeIndex === 0) {
+      console.log("activeIndex", activeIndex);
+      switch (filterMode) {
+        case "Steps":
+          dataToExport = userData.map(({ user_id, id, steps, step_target, created_at, updated_at, created_by_id, updated_by_id }) => ({
+            user_id, id, steps, step_target, created_at, updated_at, created_by_id, updated_by_id
+          }));
+          break;
+
+        case "Sleep":
+          dataToExport = userData.map(({ user_id, id, sleep_value, sleep_target, created_at, updated_at, created_by_id, updated_by_id }) => ({
+            user_id, id, sleep_value, sleep_target, created_at, updated_at, created_by_id, updated_by_id
+          }));
+          break;
+
+        case "Calories":
+          dataToExport = userData.map(({ user_id, id, calories_value, calories_target, created_at, updated_at, created_by_id, updated_by_id }) => ({
+            user_id, id, calories_value, calories_target, created_at, updated_at, created_by_id, updated_by_id
+          }));
+          break;
+
+        case "Intensity":
+          dataToExport = userData.map(({ user_id, id, intensity, created_at, updated_at, created_by_id, updated_by_id }) => ({
+            user_id, id, intensity, created_at, updated_at, created_by_id, updated_by_id
+          }));
+          break;
+
+        case "Heart Rate":
+          dataToExport = userData.map(({ user_id, id, min_heart_rate, max_heart_rate, created_at, updated_at, created_by_id, updated_by_id }) => ({
+            user_id, id, min_heart_rate, max_heart_rate, created_at, updated_at, created_by_id, updated_by_id
+          }));
+          break;
+
+        default:
+          dataToExport = userData.map(({
+            user_id, id, sleep_target, sleep_value, steps, calories_target, calories_value,
+            intensity, min_heart_rate, max_heart_rate, created_at, updated_at, created_by_id, updated_by_id, step_target
+          }) => ({
+            user_id, id, sleep_target, sleep_value, steps, calories_target, calories_value,
+            intensity, min_heart_rate, max_heart_rate, created_at, updated_at, created_by_id, updated_by_id, step_target
+          }));
+          break;
+      }
+    } else {
+      console.log("activeIndex", activeIndex);
+      dataToExport = userData.map(({
+        user_id, id, sleep_target, sleep_value, steps, calories_target, calories_value,
+        intensity, min_heart_rate, max_heart_rate, created_at, updated_at, created_by_id, updated_by_id, step_target
+      }) => ({
+        user_id, id, sleep_target, sleep_value, steps, calories_target, calories_value,
+        intensity, min_heart_rate, max_heart_rate, created_at, updated_at, created_by_id, updated_by_id, step_target
+      }));
+    }
 
     downloadFile({
       data: JSON.stringify(dataToExport),
-      fileName: "survey_user_id_10_answers.json",
+      fileName: activeIndex === 2
+        ? "survey_user_id_" + localStorage.getItem("patientId") + "'s_data.json"
+        : "user_id_" + localStorage.getItem("patientId") + "'s_data.json",
       fileType: "text/json",
     });
+    selectedQuestion = null;
   }
 
   function DownloadCSV() {
     let headers, usersCsv;
 
-    if (activeIndex !== 2) {
-      headers = [
-        "user_id,sleep_target,sleep_value,steps,calories_target,calories_value,intensity,min_heart_rate,max_heart_rate,data_created_at,data_updated_at,data_created_by_id,data_updated_by_id,daily_step_goal",
-      ];
+    if (activeIndex === 0) {
+      console.log("activeIndex", activeIndex);
+      switch (filterMode) {
+        case "Steps":
+          headers = ["user_id,id,steps,step_target,created_at,updated_at,created_by_id,updated_by_id"];
+          usersCsv = userData.reduce((acc, user) => {
+            const { user_id, id, steps, step_target, created_at, updated_at, created_by_id, updated_by_id } = user;
+            acc.push([user_id, id, steps, step_target, created_at, updated_at, created_by_id, updated_by_id].join(","));
+            return acc;
+          }, []);
+          break;
 
-      usersCsv = userData.reduce((acc, user) => {
-        const {
-          user_id,
-          sleep_target,
-          sleep_value,
-          steps,
-          calories_target,
-          calories_value,
-          intensity,
-          min_heart_rate,
-          max_heart_rate,
-          data_created_at,
-          data_updated_at,
-          data_created_by_id,
-          data_updated_by_id,
-          daily_step_goal,
-        } = user;
-        acc.push(
-          [
-            user_id,
-            sleep_target,
-            sleep_value,
-            steps,
-            calories_target,
-            calories_value,
-            intensity,
-            min_heart_rate,
-            max_heart_rate,
-            data_created_at,
-            data_updated_at,
-            data_created_by_id,
-            data_updated_by_id,
-            daily_step_goal,
-          ].join(",")
-        );
-        return acc;
-      }, []);
-    } else {
+        case "Sleep":
+          headers = ["user_id,id,sleep_value,sleep_target,created_at,updated_at,created_by_id,updated_by_id"];
+          usersCsv = userData.reduce((acc, user) => {
+            const { user_id, id, sleep_value, sleep_target, created_at, updated_at, created_by_id, updated_by_id } = user;
+            acc.push([user_id, id, sleep_value, sleep_target, created_at, updated_at, created_by_id, updated_by_id].join(","));
+            return acc;
+          }, []);
+          break;
+
+        case "Calories":
+          headers = ["user_id,id,calories_value,calories_target,created_at,updated_at,created_by_id,updated_by_id"];
+          usersCsv = userData.reduce((acc, user) => {
+            const { user_id, id, calories_value, calories_target, created_at, updated_at, created_by_id, updated_by_id } = user;
+            acc.push([user_id, id, calories_value, calories_target, created_at, updated_at, created_by_id, updated_by_id].join(","));
+            return acc;
+          }, []);
+          break;
+
+        case "Intensity":
+          headers = ["user_id,id,intensity,created_at,updated_at,created_by_id,updated_by_id"];
+          usersCsv = userData.reduce((acc, user) => {
+            const { user_id, id, intensity, created_at, updated_at, created_by_id, updated_by_id } = user;
+            acc.push([user_id, id, intensity, created_at, updated_at, created_by_id, updated_by_id].join(","));
+            return acc;
+          }, []);
+          break;
+
+        case "Heart Rate":
+          headers = ["user_id,id,min_heart_rate,max_heart_rate,created_at,updated_at,created_by_id,updated_by_id"];
+          usersCsv = userData.reduce((acc, user) => {
+            const { user_id, id, min_heart_rate, max_heart_rate, created_at, updated_at, created_by_id, updated_by_id } = user;
+            acc.push([user_id, id, min_heart_rate, max_heart_rate, created_at, updated_at, created_by_id, updated_by_id].join(","));
+            return acc;
+          }, []);
+          break;
+
+        default:
+          headers = ["user_id,id,sleep_target,sleep_value,steps,calories_target,calories_value,intensity,min_heart_rate,max_heart_rate,created_at,updated_at,created_by_id,updated_by_id,step_target"];
+          usersCsv = userData.reduce((acc, user) => {
+            const {
+              user_id,
+              id,
+              sleep_target,
+              sleep_value,
+              steps,
+              calories_target,
+              calories_value,
+              intensity,
+              min_heart_rate,
+              max_heart_rate,
+              created_at,
+              updated_at,
+              created_by_id,
+              updated_by_id,
+              step_target,
+            } = user;
+            acc.push(
+              [
+                user_id,
+                id,
+                sleep_target,
+                sleep_value,
+                steps,
+                calories_target,
+                calories_value,
+                intensity,
+                min_heart_rate,
+                max_heart_rate,
+                created_at,
+                updated_at,
+                created_by_id,
+                updated_by_id,
+                step_target,
+              ].join(",")
+            );
+            return acc;
+          }, []);
+          break;
+      }
+    } else if(activeIndex === 2) {
+      console.log("activeIndex", activeIndex);
       headers = ["user_id,id,question,answer"];
       if (selectedQuestion === null) {
         if (filterType === "all") {
@@ -251,15 +380,58 @@ export function Header({
           return acc;
         }, []);
       }
+    } else {
+      console.log("activeIndex", activeIndex);  
+      headers = ["user_id,id,sleep_target,sleep_value,steps,calories_target,calories_value,intensity,min_heart_rate,max_heart_rate,created_at,updated_at,created_by_id,updated_by_id,step_target"];
+          usersCsv = userData.reduce((acc, user) => {
+            const {
+              user_id,
+              id,
+              sleep_target,
+              sleep_value,
+              steps,
+              calories_target,
+              calories_value,
+              intensity,
+              min_heart_rate,
+              max_heart_rate,
+              created_at,
+              updated_at,
+              created_by_id,
+              updated_by_id,
+              step_target,
+            } = user;
+            acc.push(
+              [
+                user_id,
+                id,
+                sleep_target,
+                sleep_value,
+                steps,
+                calories_target,
+                calories_value,
+                intensity,
+                min_heart_rate,
+                max_heart_rate,
+                created_at,
+                updated_at,
+                created_by_id,
+                updated_by_id,
+                step_target,
+              ].join(",")
+            );
+            return acc;
+          }, []);
     }
     downloadFile({
       data: [...headers, ...usersCsv].join("\n"),
       fileName:
         activeIndex === 2
-          ? `survey_user_id_${userData[0].user_id}_answers.csv`
-          : `user_id_${userData[0].user_id}_data.csv`,
+          ? `survey_user_id_${localStorage.getItem("patientId")}_answers.csv`
+          : `user_id_${localStorage.getItem("patientId")}_data.csv`,
       fileType: "text/csv",
     });
+    selectedQuestion = null;
   }
 
   const [open, setOpen] = useState(false); //holds visiblity state of sidebar

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import Chart from "chart.js/auto";
 import { toDate } from "date-fns";
-import _, { toLength } from "lodash";
+import _, { set, toLength } from "lodash";
 import Axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -22,6 +22,12 @@ function Graph({
   prediction,
   publicData,
   diabetesData,
+  startDateHeader,
+  setStartDateHeader,
+  endDateHeader,
+  setEndDateHeader,
+  setDateStart,
+  setDateEnd,
 }) {
   let backAvailable = false;
   const [prevData, setPrevData] = useState([]);
@@ -278,7 +284,7 @@ function Graph({
     if (theme.name === "highcon") {
       setTLC("#B74030");
       setBC("#FF0F00");
-      setBC2("#E1315B");
+      setBC2("#0F65FA");
       setCMC("#000000");
       setTC("#000000");
       setAC("#000000");
@@ -601,7 +607,7 @@ function Graph({
           <label style={{ fontSize: "0.8em" }}>Start Date: </label>
           <DatePicker
             selected={startDateUnpushed}
-            onChange={(date) => setStartDateUnpushed(date)}
+            onChange={(date) => {setStartDateUnpushed(date); setStartDateHeader(date); setDateStart(date)}}
             dateFormat="dd/MM/yyyy"
           />
         </div>
@@ -610,7 +616,7 @@ function Graph({
           <label style={{ fontSize: "0.8em" }}>End Date: </label>
           <DatePicker
             selected={endDateUnpushed}
-            onChange={(date) => setEndDateUnpushed(date)}
+            onChange={(date) => {setEndDateUnpushed(date); setEndDateHeader(date); setDateEnd(date)}}
             dateFormat="dd/MM/yyyy"
           />
         </div>

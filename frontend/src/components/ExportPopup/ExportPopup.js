@@ -73,7 +73,7 @@ export function ExportPopup(props) {
               style={{
                 display: "flex",
                 flexDirection: "column",
-                backgroundColor: props.selectedTheme.colors.statcardbackground,
+                backgroundColor: "#423F43",
               }}
               onClick={downloadCSV}
             >
@@ -95,7 +95,7 @@ export function ExportPopup(props) {
               style={{
                 display: "flex",
                 flexDirection: "column",
-                backgroundColor: props.selectedTheme.colors.statcardbackground,
+                backgroundColor: "#423F43",
               }}
               onClick={downloadJSON}
             >

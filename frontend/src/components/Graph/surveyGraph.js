@@ -192,6 +192,10 @@ function SurveyGraph({ patientId, theme, setFilterType, setFilteredQuestions, se
       .filter((q) => filterType === "all" || q.type === filterType);
 
     setFilteredQuestionsLocal(filtered);
+    //setFilteredQuestions(filtered);
+    setFilteredQuestions(prev =>
+      JSON.stringify(prev) !== JSON.stringify(filtered) ? filtered : prev
+    );
   }, [filterType, uniqueQuestions]);
 
   const renderOptionRectangles = (last14DaysAnswers) => {
@@ -303,7 +307,9 @@ function SurveyGraph({ patientId, theme, setFilterType, setFilteredQuestions, se
 
   const resetGraph = () => {
     setSelectedQuestionLocal(null);
+    setSelectedQuestion(null);
     setIsQuestionSelected(false);
+    setSelectedAnswer(null);
     setReactionData(surveyData.map((item) => (item.is_reaction_question ? 1 : 0)));
     setLabels(surveyData.map((item) => item.answer));
   };
@@ -410,7 +416,7 @@ function SurveyGraph({ patientId, theme, setFilterType, setFilteredQuestions, se
           )}
         </>
       )}
-      {questionLimitResponse && (
+      {questionLimitResponse && selectedAnswer && (
         <div style={{ marginBottom: "20px", textAlign: "center" }}>
           <h3>Answer:</h3>
           <p>{selectedAnswer}</p>

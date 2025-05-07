@@ -87,13 +87,23 @@ function DashboardBody({
   setSelectedQuestion,
   setSelectedQuestionId,
   selectedQuestionId,
+  dateStart,
+  setDateStart,
+  dateEnd,
+  setDateEnd,
+  setActiveIndex
 }) {
   //const handleTypeChange
+  const [startDate, setStartDate] = useState(new Date(new Date().setDate(new Date().getDate() - 6)));
+  const [endDate, setEndDate] = useState(new Date());
   const [publicData, setPublicData] = useState(false);
   const [diabetesData, setDiabetesData] = useState(false);
   const [isMainActive, setIsMainActive] = useState(true);
   const [isGlucoseActive, setIsGucoseActive] = useState(false);
   const [isSurveyActive, setIsSurveyActive] = useState(false);
+
+  console.log("startDate", startDate);
+  console.log("endDate", endDate);
 
   const handleFilterTypeChange = (newFilterType) => {
     //console.log("Filter type changed to:", newFilterType);
@@ -115,6 +125,14 @@ function DashboardBody({
     setSelectedQuestionId(id);
   };
 
+  const handleStartDateChange = (date) => {
+    setDateStart(date);
+  }
+
+  const handleEndDateChange = (date) => {
+    setDateEnd(date);
+  }
+
   const activeIndex = isMainActive ? 0 : isGlucoseActive ? 1 : 2;
 
   // Handler to update state when ToggleSwitch changes
@@ -123,6 +141,10 @@ function DashboardBody({
     setIsGucoseActive(glucoseActive);
     setIsSurveyActive(surveyActive);
   };
+
+  useEffect(() => {
+    setActiveIndex(activeIndex);
+  }, [activeIndex, setActiveIndex]);
 
   const [group, setGroup] = useState(
     <div style={{ margin: "auto" }}>
@@ -433,8 +455,8 @@ function DashboardBody({
                       }
                       goal={goals.intensityGoal}
                     ></OverviewStatCard>
-                    <GoalCard goalData={goals.stepsGoal} hr={null}/>
-                    <GoalCard goalData={goals.sleepGoal} hr={null}/>
+                    <GoalCard goalData={goals.stepsGoal} hr={null} />
+                    <GoalCard goalData={goals.sleepGoal} hr={null} />
 
                     <GoalCard
                       goalData={diabetesData ? goals.glucoseValue : goals.intensityGoal}
@@ -447,8 +469,8 @@ function DashboardBody({
                       goals={goals}
                       type={"last"}
                       hr={publicData ? true : null}
-                      maxHeartRate = {userData.dataMaxReartRate}
-                      minHeartRate = {userData.dataMinReartRate}
+                      maxHeartRate={userData.dataMaxReartRate}
+                      minHeartRate={userData.dataMinReartRate}
                     />{console.log("Public data" + userData.dataMaxReartRate)}
                   </CardRowThemed>
                 </>
@@ -475,7 +497,7 @@ function DashboardBody({
               {
                 isMainActive ? (
                   <FormControlThemed
-                  style={{backgroundColor: selectedTheme.colors.cardHolders}}
+                    style={{ backgroundColor: selectedTheme.colors.cardHolders }}
                     sx={{
                       marginBottom: "0.2em",
                       width: "9vw",
@@ -532,6 +554,12 @@ function DashboardBody({
                       goals={graphGoals}
                       prediction={predictions[filterMode]}
                       publicData={publicData}
+                      startDateHeader={startDate}
+                      setStartDateHeader={setStartDate}
+                      endDateHeader={endDate}
+                      setEndDateHeader={setEndDate}
+                      setDateStart={handleStartDateChange}
+                      setDateEnd={handleEndDateChange}
                     />
                   </GraphCard>
                   <div
@@ -588,6 +616,12 @@ function DashboardBody({
                       goals={graphGoals}
                       prediction={predictions[filterMode]}
                       publicData={publicData}
+                      startDateHeader={startDate}
+                      setStartDateHeader={setStartDate}
+                      endDateHeader={endDate}
+                      setEndDateHeader={setEndDate}
+                      setDateStart={handleStartDateChange}
+                      setDateEnd={handleEndDateChange}
                     />
                   </GraphCard>
                   <div
@@ -628,7 +662,7 @@ function DashboardBody({
                       width: "30%",
                     }}
                   >
-                    <StatsBox>
+                    <StatsBox style={{ backgroundColor: selectedTheme.colors.overviewbackground }}>
                       <PatientList
                         clinicianId={localStorage.getItem("clinicianId")}
                         selectedQuestionId={selectedQuestionId}
@@ -648,11 +682,11 @@ function DashboardBody({
             userID={userID}
           />*/}
           <BadgeData
-          name={localStorage.getItem("patientName")}
-          theme={selectedTheme}   
-          email={localStorage.getItem("email")}
-          group={group}
-          userId={localStorage.getItem("patientId")}
+            name={localStorage.getItem("patientName")}
+            theme={selectedTheme}
+            email={localStorage.getItem("email")}
+            group={group}
+            userId={localStorage.getItem("patientId")}
           />
         </div>
       </div>
@@ -663,9 +697,9 @@ function DashboardBody({
 
 
 export const Dashboard = () => {
-  const [maxHeartRate, setMaxHeartRate] = useState(0);
-  const [minHeartRate, setMinHeartRate] = useState(0);
-  const [averageHeartRate, setAverageHeartRate] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [startDate, setStartDate] = useState(new Date(new Date().setDate(new Date().getDate() - 6)));
+  const [endDate, setEndDate] = useState(new Date());
   const [filterType, setFilterType] = useState("all");
   const [filteredQuestions, setFilteredQuestions] = useState([]);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
@@ -751,6 +785,11 @@ export const Dashboard = () => {
     },
   });
   const [loading, setLoading] = useState(true);
+
+  const changeActiveIndex = (value) => {
+    setActiveIndex(value);
+    console.log(value);
+  };
 
   const fetchData = async () => {
     try {
@@ -942,11 +981,14 @@ export const Dashboard = () => {
           navigateReturn={navigateReturn}
           selectedTheme={selectedTheme}
           setSelectedTheme={setSelectedTheme}
-          activeIndex={0}
+          activeIndex={activeIndex}
           filterType={filterType}
           filteredQuestions={filteredQuestions}
           selectedQuestion={selectedQuestion}
           selectedQuestionId={selectedQuestionId}
+          filterMode={filterMode}
+          startDate={startDate}
+          endDate={endDate}
         />
         <DashboardBody
           filterMode={filterMode}
@@ -962,6 +1004,11 @@ export const Dashboard = () => {
           setSelectedQuestion={setSelectedQuestion}
           setSelectedQuestionId={setSelectedQuestionId}
           selectedQuestionId={selectedQuestionId}
+          dateStart={startDate}
+          dateEnd={endDate}
+          setDateStart={setStartDate}
+          setDateEnd={setEndDate}
+          setActiveIndex={changeActiveIndex}
         />
         <Footer style={{ zIndex: 1 }} />
       </div>
