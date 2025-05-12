@@ -3,16 +3,7 @@ const cors = require("cors");
 const axios = require("axios");
 const fs = require("fs");
 const csvParser = require("csv-parser");
-const { Pool } = require("pg");
 const { ConnectingAirportsOutlined } = require("@mui/icons-material");
-
-const pool = new Pool({
-  user: "postgres",
-  host: "localhost",
-  database: "copia_active",
-  password: "veloz3000",
-  port: 5432,
-});
 
 require("dotenv").config();
 
@@ -137,7 +128,7 @@ app.get("/api/clinicians/:id/up_users", async (req, res) => {
   const { id } = req.params;
 
   try {
-    const result = await pool.query(`
+    const result = await db.query(`
       SELECT up_users.id, up_users.username 
       FROM up_users 
       JOIN up_users_clinician_links 
@@ -199,7 +190,7 @@ app.get("/api/patients/:patientId/:questionId/answers", async (req, res) => {
   const question_id = req.params.questionId;
 
   try {
-    const result = await pool.query(`
+    const result = await db.query(`
       SELECT 
     csa.question,
     caa.answer
@@ -227,7 +218,7 @@ app.get("/api/patients/:patientId/answers_14_days", async (req, res) => {
   const patientId = req.params.patientId;
 
   try {
-    const result = await pool.query(`
+    const result = await db.query(`
     SELECT 
     aul.user_id,
     csa.id,
@@ -262,7 +253,7 @@ app.get("/api/patients/:patientId/:surveyId/answers_14_days", async (req, res) =
   const surveyId = req.params.surveyId;
 
   try {
-    const result = await pool.query(`
+    const result = await db.query(`
       SELECT
 	  csal.survey_id,
 	  s.title,
@@ -300,7 +291,7 @@ app.get("/api/question_options/:patientId", async (req, res) => {
   const patientId = req.params.patientId;
 
   try {
-    const result = await pool.query(`
+    const result = await db.query(`
       SELECT DISTINCT ON (caa.answer)
     csa.id,
     csa.question,
@@ -327,7 +318,7 @@ app.get("/api/question_checkboxes/:patientId", async (req, res) => {
   const patientId = req.params.patientId;
 
   try {
-    const result = await pool.query(`
+    const result = await db.query(`
 SELECT DISTINCT ON (csa.question)
     csa.id,
     csa.question,
@@ -354,7 +345,7 @@ app.get("/api/question_answers/:questionId", async (req, res) => {
   const questionId = req.params.questionId;
 
   try {
-    const result = await pool.query(`
+    const result = await db.query(`
       select csal.answer_id, caa.answer
 from component_survey_answer_link csal
 join components_answer_answers caa on csal.answer_id = caa.id
@@ -371,7 +362,7 @@ app.get("/api/badgeData/:id/up_users", async (req, res) => {
   const { id } = req.params;
 
   try {
-    const result = await pool.query(`
+    const result = await db.query(`
       SELECT up_users.id, up_users.full_name, up_users.email, groups_users_links.group_id, groups.title, up_users.photo
       FROM up_users 
       JOIN up_users_clinician_links 
