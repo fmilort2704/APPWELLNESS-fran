@@ -252,10 +252,7 @@ const AuthPage = () => {
       <GlobalStyles />
       <div className="auth-container">
         <PatientCardThemed className="auth-card">
-          <h1><ArrowBackIosNewIcon
-            style={{ cursor: "pointer", marginRight: "8px" }}
-            onClick={handleBack}
-          />Login to Dashboard</h1>
+          <h1>Login to Dashboard</h1>
           <form onSubmit={handleSubmit} style={{ marginTop: "16px" }}>
             {userType === "clinician" && (
               <>
