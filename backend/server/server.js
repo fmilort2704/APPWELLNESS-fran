@@ -3,13 +3,11 @@ const cors = require("cors");
 const axios = require("axios");
 const fs = require("fs");
 const csvParser = require("csv-parser");
-const { Pool } = require("pg");
 const { ConnectingAirportsOutlined } = require("@mui/icons-material");
 const bcrypt = require('bcrypt');
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const mfaCodes = new Map();
-
 
 require("dotenv").config();
 
