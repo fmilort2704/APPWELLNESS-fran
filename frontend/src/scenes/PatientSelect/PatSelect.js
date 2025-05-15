@@ -38,6 +38,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { Add, Search } from "@mui/icons-material";
 import styled from "styled-components";
 import { findAllByDisplayValue } from "@testing-library/react";
+import { use } from "react";
 
 const user = {
   name: "Halima Macias",
@@ -91,7 +92,7 @@ const AddPatientButton = styled(IconButton)`
  * @param navigateFunction Function to navigate to chosen patients dashboard 
  * @returns Card row for patient cards
  */
-function CardRow({ patients, navigateFunction, clinicianId, refreshUserList }) {
+function CardRow({ patients, navigateFunction, clinicianId, refreshUserList, userType }) {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
 
   const handleAddPatientClick = () => {
@@ -129,12 +130,18 @@ function CardRow({ patients, navigateFunction, clinicianId, refreshUserList }) {
           alignItems: "center",
         }}
       >
-        <h1 style={{ fontSize: "1.2em", margin: 0 }}>Your Users</h1>
-        <Tooltip title="Add patient" arrow>
-          <AddPatientButton onClick={handleAddPatientClick}>
-            <Add />
-          </AddPatientButton>
-        </Tooltip>
+        {userType === "user" ? (
+          <h1 style={{ fontSize: "1.2em", margin: 0 }}>Your Profile</h1>
+        ) : (
+          <>
+            <h1 style={{ fontSize: "1.2em", margin: 0 }}>Your Users</h1>
+            <Tooltip title="Add patient" arrow>
+              <AddPatientButton onClick={handleAddPatientClick}>
+                <Add />
+              </AddPatientButton>
+            </Tooltip>
+          </>
+        )}
       </div>
       <PatientRowThemed>
         {patients.map((e, i) => (
@@ -604,6 +611,7 @@ export function PatSelect() {
   const [data, setData] = useState([]);
   const location = useLocation();
   const userType = location.state?.userType;
+  const userId = location.state?.userId || localStorage.getItem("patientId");
   const [institutionName, setInstitutionName] = useState("");
   const [clinicianId, setClinicianId] = useState(null);
   const [fullName, setFullName] = useState("");
@@ -616,7 +624,6 @@ export function PatSelect() {
     }
 
     const loggedInClinicianId = localStorage.getItem("clinicianId");
-    console.log(`Clinician id from localStorage: ${loggedInClinicianId}`);
     if (loggedInClinicianId) {
       setClinicianId(parseInt(loggedInClinicianId));
     }
@@ -628,19 +635,32 @@ export function PatSelect() {
     }
   }, [location.state]);
 
+  // Cambia refreshUserList para soportar userType 'user'
   const refreshUserList = () => {
-    if (clinicianId !== null) {
-      console.log(`Refreshing user list for clinicianId: ${clinicianId}`);
-
+    console.log('[DEBUG] userType:', userType);
+    console.log('[DEBUG] userId:', userId);
+    if (userType === "user") {
+      const apiUrlAllUsers =
+        process.env.NODE_ENV === "production"
+          ? `/api/all-user-details`
+          : `http://localhost:5001/api/all-user-details`;
+      Axios.get(apiUrlAllUsers)
+        .then((response) => {
+          console.log('[DEBUG] /all-user-details response:', response.data);
+          setData(response.data);
+        })
+        .catch((error) => {
+          console.error("Error fetching all users:", error.response?.data || error.message);
+        });
+    } else if (clinicianId !== null) {
       const apiUrlDetails =
         process.env.NODE_ENV === "production"
           ? `/api/clinician-user-details`
           : `http://localhost:5001/api/clinician-user-details`;
-
       Axios.post(apiUrlDetails, { clinicianId })
         .then((response) => {
+          console.log('[DEBUG] /clinician-user-details response:', response.data);
           setData(response.data);
-          console.log("Updated Response Data:", response.data);
         })
         .catch((error) => {
           console.error("Error refreshing user list:", error.response?.data || error.message);
@@ -650,12 +670,11 @@ export function PatSelect() {
 
   useEffect(() => {
     refreshUserList();
-  }, [clinicianId]);
-
-  console.log("HERE");
-  console.log(data);
+    // eslint-disable-next-line
+  }, [clinicianId, userType]);
 
   let userList = [];
+  console.log('[DEBUG] data before userList mapping:', data);
   data.forEach((user) => {
     userList.push({
       name: user.user_name,
@@ -664,38 +683,31 @@ export function PatSelect() {
       UID: user.user_id,
     });
   });
+  console.log('[DEBUG] userList:', userList);
 
-  console.log(userList)
+  // Si es user, filtra solo su propio paciente
+  let filteredList = userList;
+  if (userType === "user" && userId) {
+    filteredList = userList.filter((u) => String(u.UID) === String(userId));
+  }
+  console.log('[DEBUG] filteredList:', filteredList);
 
   const [selectedTheme, setSelectedTheme] = useState(dark);
-  console.log(selectedTheme);
-
   useEffect(() => {
     const currentTheme = JSON.parse(localStorage.getItem("currentTheme"));
     if (currentTheme) {
       setSelectedTheme(currentTheme);
     }
-
   }, []);
 
   const navigate = useNavigate();
-
   const toDashboard = async (id, name) => {
     try {
-      const preUrl =
-        process.env.NODE_ENV === "production" ? "" : "http://localhost:5001";
-
+      const preUrl = process.env.NODE_ENV === "production" ? "" : "http://localhost:5001";
       const apiUrl = `${preUrl}/api/ap_user_ids`;
-
-      console.log(`[INFO] Fetching data for user ID: ${id}`);
-
       localStorage.setItem("patientId", id);
-
-      const response = await Axios.get(apiUrl);
-
-      console.log("[INFO] Fetched Data:", response.data);
-
-      navigate("/dashboard", { state: { id: id, name: name } });
+      await Axios.get(apiUrl);
+      navigate("/dashboard", { state: { id: id, name: name, userType } });
     } catch (error) {
       console.error("[ERROR] Failed to fetch data or navigate:", error.message);
     }
@@ -712,22 +724,23 @@ export function PatSelect() {
           institutionName={institutionName}
           userType={userType}
         />
-        <div className="PatSelect-Body">
+        <div className="PatSelect-Body" style={userType === "user" ? { display: "flex", flexDirection: "column", alignItems: "flex-start", marginTop: "-12em" } : {}}>
+          {/* Si es user, solo muestra su card, no la tabla */}
           <CardRow
-            patients={userList.filter((e) => e.clinician === fullName)}
+            patients={filteredList}
             navigateFunction={toDashboard}
             clinicianId={clinicianId}
-            refreshUserList={refreshUserList} // Pass down refresh function
+            refreshUserList={refreshUserList}
+            userType={userType}
           />
-          <hr></hr>
-          <PatientTable patients={userList} navigateFunction={toDashboard} />
+          {/* Solo muestra la tabla si NO es user */}
+          {userType !== "user" && <><hr></hr><PatientTable patients={userList} navigateFunction={toDashboard} /></>}
         </div>
         <Footer style={{ zIndex: 1 }} />
       </div>
     </ThemeProvider>
   );
 }
-
 
 
 // useEffect(() => {

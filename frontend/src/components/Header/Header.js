@@ -341,7 +341,6 @@ export function Header({
           headers = ["user_id,id,sleep_value,sleep_target,created_at,updated_at,created_by_id,updated_by_id"];
           usersCsv = userData.reduce((acc, user) => {
             const { user_id, id, sleep_value, sleep_target, created_at, updated_at, created_by_id, updated_by_id } = user;
-            acc.push([user_id, id, sleep_value, sleep_target, created_at, updated_at, created_by_id, updated_by_id].join(","));
             return acc;
           }, []);
           break;
@@ -350,7 +349,6 @@ export function Header({
           headers = ["user_id,id,calories_value,calories_target,created_at,updated_at,created_by_id,updated_by_id"];
           usersCsv = userData.reduce((acc, user) => {
             const { user_id, id, calories_value, calories_target, created_at, updated_at, created_by_id, updated_by_id } = user;
-            acc.push([user_id, id, calories_value, calories_target, created_at, updated_at, created_by_id, updated_by_id].join(","));
             return acc;
           }, []);
           break;
@@ -510,11 +508,99 @@ export function Header({
   let exportButton;
   let exitButton;
   if (name === "") {
-    title = (
-      <h2 className={"HeaderFont"} style={{ float: "left", fontSize: "0.4em" }}>
-        Selected User {userID}
-      </h2>
-    );
+    if (userType === "user") {
+      title = (
+        <h2 className={"HeaderFont"} style={{ float: "left", fontSize: "0.4em" }}>
+          {localStorage.getItem("patientName") || "Paciente"}
+          <IconButton
+            size="small"
+            aria-label="change password"
+            onClick={handleChangePasswordClick}
+          ><LockResetIcon style={{color: "white"}}/> <span style={{color: "white"}}>Change password</span></IconButton>
+          <Dialog className="MuiDialog-paper" open={openDialog} onClose={handleDialogClose}>
+            <DialogTitle className="MuiDialogTitle-root">Change Password</DialogTitle>
+            <DialogContent className="MuiDialogContent-root">
+              <TextField
+                className="MuiTextField-root"
+                margin="dense"
+                label="Current Password"
+                type="password"
+                value={currentPassword}
+                onChange={(e)=> setCurrentPassword(e.target.value)}
+              />
+              <TextField
+                className="MuiTextField-root"
+                margin="dense"
+                label="New Password"
+                type="password"
+                value={newPassword}
+                onChange={(e)=> setNewPassword(e.target.value)}
+              />
+              <TextField
+                className="MuiTextField-root"
+                margin="dense"
+                label="Confirm New Password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e)=> setConfirmPassword(e.target.value)}
+                error={!!error}
+                helperText={error}
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button className="MuiButton-root" onClick={handleDialogClose}>Cancel</Button>
+              <Button className="MuiButton-root" onClick={handlePasswordChange}>Change</Button>
+            </DialogActions>
+          </Dialog>
+        </h2>
+      );
+    } else {
+      title = (
+        <h2 className={"HeaderFont"} style={{ float: "left", fontSize: "0.4em" }}>
+          Selected User {userID}
+          <IconButton
+            size="small"
+            aria-label="change password"
+            onClick={handleChangePasswordClick}
+          ><LockResetIcon style={{color: "white"}}/> <span style={{color: "white"}}>Change password</span></IconButton>
+          <Dialog className="MuiDialog-paper" open={openDialog} onClose={handleDialogClose}>
+            <DialogTitle className="MuiDialogTitle-root">Change Password</DialogTitle>
+            <DialogContent className="MuiDialogContent-root">
+              <TextField
+                className="MuiTextField-root"
+                margin="dense"
+                label="Current Password"
+                type="password"
+                value={currentPassword}
+                onChange={(e)=> setCurrentPassword(e.target.value)}
+              />
+              <TextField
+                className="MuiTextField-root"
+                margin="dense"
+                label="New Password"
+                type="password"
+                value={newPassword}
+                onChange={(e)=> setNewPassword(e.target.value)}
+              />
+              <TextField
+                className="MuiTextField-root"
+                margin="dense"
+                label="Confirm New Password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e)=> setConfirmPassword(e.target.value)}
+                error={!!error}
+                helperText={error}
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button className="MuiButton-root" onClick={handleDialogClose}>Cancel</Button>
+              <Button className="MuiButton-root" onClick={handlePasswordChange}>Change</Button>
+            </DialogActions>
+          </Dialog>
+        </h2>
+      );
+    }
   } else {
     title = (
       <h2 className={"HeaderFont"} style={{ float: "left", fontSize: "0.4em" }}>

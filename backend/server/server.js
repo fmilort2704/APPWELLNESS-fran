@@ -411,6 +411,32 @@ WHERE uu.id = $1
   }
 });
 
+app.get("/api/all-user-details", async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT 
+         uu.id AS user_id,
+         uu.full_name AS user_name,
+         inst.name AS clinic_name,
+         COALESCE(cl.first_name || ' ' || cl.last_name, 'No Clinician') AS clinician_name
+       FROM 
+         up_users uu
+       LEFT JOIN 
+         up_users_clinician_links ucl ON uu.id = ucl.user_id
+       LEFT JOIN 
+         clinicians cl ON ucl.clinician_id = cl.id
+       LEFT JOIN 
+         clinicians_institution_links cil ON cl.id = cil.clinician_id
+       LEFT JOIN 
+         institutions inst ON cil.institution_id = inst.id`
+    );
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error("Error fetching all user details:", error);
+    res.status(500).send("Server error while fetching all user details.");
+  }
+});
+
 
 
 

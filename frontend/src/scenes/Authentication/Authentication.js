@@ -31,7 +31,7 @@ const AuthPage = () => {
   const [userId, setUserId] = useState(null);
   const [step, setStep] = useState(0);
   const [loginResponse, setLoginResponse] = useState(null);
-  const [userType, setUserType] = useState("clinician");
+  const [userType, setUserType] = useState(null);
 
   useEffect(() => {
     const currentTheme = JSON.parse(localStorage.getItem("currentTheme"));
@@ -125,7 +125,7 @@ const AuthPage = () => {
     }
   };
 
-  /*if (userType === null) {
+  if (userType === null) {
     return (
       <ThemeProvider theme={selectedTheme}>
         <GlobalStyles />
@@ -160,7 +160,7 @@ const AuthPage = () => {
         </div>
       </ThemeProvider>
     );
-  }*/
+  }
 
   const handleVerifyCode = async () => {
     try {
@@ -192,8 +192,8 @@ const AuthPage = () => {
           });
         } else {
           localStorage.setItem("patientId", userId);
-          navigate("/dashboard", {
-            state: { id: userId, userType: "user" },
+          navigate("/home", {
+            state: { userType: "user", userId },
           });
         }
       } else {
@@ -252,7 +252,10 @@ const AuthPage = () => {
       <GlobalStyles />
       <div className="auth-container">
         <PatientCardThemed className="auth-card">
-          <h1>Login to Dashboard</h1>
+          <h1><ArrowBackIosNewIcon
+            style={{ cursor: "pointer", marginRight: "8px" }}
+            onClick={handleBack}
+          />Login to Dashboard</h1>
           <form onSubmit={handleSubmit} style={{ marginTop: "16px" }}>
             {userType === "clinician" && (
               <>
