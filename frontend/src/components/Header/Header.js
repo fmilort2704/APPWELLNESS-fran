@@ -46,6 +46,14 @@ import { groupModel } from "../../utility/apiCommunicator";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { BadgePopup } from "../PatientBadge/BagdePopup";
 import { AlertBox } from "../Sidebar/Alert";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import TextField from "@mui/material/TextField";
+import LockResetIcon from "@mui/icons-material/LockReset";
 
 function Export() {
   var doc = new jsPDF("p", "pt", "a4");
@@ -101,7 +109,60 @@ export function Header({
   filterMode,
   startDate,
   endDate,
+  userType,
 }) {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handleNameClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleChangePasswordClick = () => {
+    setOpenDialog(true);
+    handleMenuClose();
+  };
+
+  const handleDialogClose = () => {
+    setOpenDialog(false);
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setError("");
+  };
+
+  const handlePasswordChange = async () => {
+    if (newPassword !== confirmPassword) {
+      setError("New passwords do not match");
+      return;
+    }
+    try {
+      console.log("Changing password for user:", localStorage.getItem("clinicianId"));
+      console.log("Current password:", currentPassword);
+      console.log("New password:", newPassword);
+      console.log("User type:", userType);
+      const baseUrl = process.env.NODE_ENV === "production" ? "" : "http://localhost:5001";
+      await Axios.post(`${baseUrl}/api/change-password`, {
+        userId: localStorage.getItem("clinicianId") || localStorage.getItem("patientId"),
+        currentPassword,
+        newPassword,
+        userType
+      });
+      alert("Password changed successfully");
+      handleDialogClose();
+    } catch (err) {
+      setError(err.response?.data?.error || "Error changing password");
+    }
+  };
+
   console.log("initial activeIndex", activeIndex);
   function formatDate(date) {
     if (!isNaN(date)) {
@@ -471,7 +532,47 @@ export function Header({
             }}
           />
           {name}
+          <IconButton
+            size="small"
+            aria-label="change password"
+            onClick={handleChangePasswordClick}
+          ><LockResetIcon style={{color: "white"}}/> <span style={{color: "white"}}>Change password</span></IconButton>
         </div>
+        <Dialog className="MuiDialog-paper" open={openDialog} onClose={handleDialogClose}>
+          <DialogTitle className="MuiDialogTitle-root">Change Password</DialogTitle>
+          <DialogContent className="MuiDialogContent-root">
+            <TextField
+              className="MuiTextField-root"
+              margin="dense"
+              label="Current Password"
+              type="password"
+              value={currentPassword}
+              onChange={(e)=> setCurrentPassword(e.target.value)}
+            />
+            <TextField
+              className="MuiTextField-root"
+              margin="dense"
+              label="New Password"
+              type="password"
+              value={newPassword}
+              onChange={(e)=> setNewPassword(e.target.value)}
+            />
+            <TextField
+              className="MuiTextField-root"
+              margin="dense"
+              label="Confirm New Password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e)=> setConfirmPassword(e.target.value)}
+              error={!!error}
+              helperText={error}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button className="MuiButton-root" onClick={handleDialogClose}>Cancel</Button>
+            <Button className="MuiButton-root" onClick={handlePasswordChange}>Change</Button>
+          </DialogActions>
+        </Dialog>
       </h2>
     );
 

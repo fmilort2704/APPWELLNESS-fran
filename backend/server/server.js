@@ -5,14 +5,11 @@ const fs = require("fs");
 const csvParser = require("csv-parser");
 const { Pool } = require("pg");
 const { ConnectingAirportsOutlined } = require("@mui/icons-material");
+const bcrypt = require('bcrypt');
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
+const mfaCodes = new Map();
 
-const pool = new Pool({
-  user: "postgres",
-  host: "localhost",
-  database: "copia_active",
-  password: "veloz3000",
-  port: 5432,
-});
 
 require("dotenv").config();
 
@@ -137,7 +134,7 @@ app.get("/api/clinicians/:id/up_users", async (req, res) => {
   const { id } = req.params;
 
   try {
-    const result = await pool.query(`
+    const result = await db.query(`
       SELECT up_users.id, up_users.username 
       FROM up_users 
       JOIN up_users_clinician_links 
@@ -199,7 +196,7 @@ app.get("/api/patients/:patientId/:questionId/answers", async (req, res) => {
   const question_id = req.params.questionId;
 
   try {
-    const result = await pool.query(`
+    const result = await db.query(`
       SELECT 
     csa.question,
     caa.answer
@@ -227,7 +224,7 @@ app.get("/api/patients/:patientId/answers_14_days", async (req, res) => {
   const patientId = req.params.patientId;
 
   try {
-    const result = await pool.query(`
+    const result = await db.query(`
     SELECT 
     aul.user_id,
     csa.id,
@@ -262,7 +259,7 @@ app.get("/api/patients/:patientId/:surveyId/answers_14_days", async (req, res) =
   const surveyId = req.params.surveyId;
 
   try {
-    const result = await pool.query(`
+    const result = await db.query(`
       SELECT
 	  csal.survey_id,
 	  s.title,
@@ -300,7 +297,7 @@ app.get("/api/question_options/:patientId", async (req, res) => {
   const patientId = req.params.patientId;
 
   try {
-    const result = await pool.query(`
+    const result = await db.query(`
       SELECT DISTINCT ON (caa.answer)
     csa.id,
     csa.question,
@@ -327,7 +324,7 @@ app.get("/api/question_checkboxes/:patientId", async (req, res) => {
   const patientId = req.params.patientId;
 
   try {
-    const result = await pool.query(`
+    const result = await db.query(`
 SELECT DISTINCT ON (csa.question)
     csa.id,
     csa.question,
@@ -354,7 +351,7 @@ app.get("/api/question_answers/:questionId", async (req, res) => {
   const questionId = req.params.questionId;
 
   try {
-    const result = await pool.query(`
+    const result = await db.query(`
       select csal.answer_id, caa.answer
 from component_survey_answer_link csal
 join components_answer_answers caa on csal.answer_id = caa.id
@@ -371,7 +368,7 @@ app.get("/api/badgeData/:id/up_users", async (req, res) => {
   const { id } = req.params;
 
   try {
-    const result = await pool.query(`
+    const result = await db.query(`
       SELECT up_users.id, up_users.full_name, up_users.email, groups_users_links.group_id, groups.title, up_users.photo
       FROM up_users 
       JOIN up_users_clinician_links 
@@ -384,6 +381,28 @@ app.get("/api/badgeData/:id/up_users", async (req, res) => {
         ON groups.id = groups_users_links.group_id
       WHERE up_users.id = $1
     `, [id]);
+
+    console.log("Query result:", result.rows);
+
+    res.json(result.rows);
+  } catch (e) {
+    console.error('Error getting the users', e);
+    res.status(500).json({ error: "Error getting the users of a clinician" })
+  }
+});
+
+app.get("/api/weekly_data/:id/:start_date/:end_date", async (req, res) => {
+  const { id, start_date, end_date } = req.params;
+
+  try {
+    const result = await db.query(`
+      SELECT uu.id, fdd.* 
+FROM fitbit_daily_datas fdd
+JOIN fitbit_daily_datas_user_links fddul ON fdd.id = fddul.fitbit_daily_data_id
+JOIN up_users uu ON uu.id = fddul.user_id
+WHERE uu.id = $1 
+  AND fdd.created_at BETWEEN $2 AND $3;
+    `, [id, start_date, end_date]);
 
     console.log("Query result:", result.rows);
 
@@ -751,13 +770,85 @@ app.post("/api/signup", async (req, res) => {
   }
 });
 
-app.post("/api/login", async (req, res) => {
-  const { firstName, lastName, institution } = req.body;
+async function hashPassword(password) {
+  const salt = "$2a$10$1234567890123456789012";
+  return await bcrypt.hash(password, salt);
+}
+
+app.post("/api/send-mfa-code", async (req, res) => {
+  const { clinicianId, email } = req.body;
+
+  const code = Math.floor(100000 + Math.random() * 900000).toString(); 
+  const expiresAt = Date.now() + 5 * 60 * 1000;
+
+  mfaCodes.set(clinicianId, { code, expiresAt });
+
+  
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: "Verification code",
+    text: `Verification code : ${code}`,
+  });
+
+  res.send({ success: true });
+});
+
+app.post("/api/verify-mfa", (req, res) => {
+  const { clinicianId, code } = req.body;
+  const entry = mfaCodes.get(clinicianId);
+
+  if (!entry || entry.expiresAt < Date.now()) {
+    return res.status(400).send("Expired code.");
+  }
+
+  if (entry.code !== code) {
+    return res.status(400).send("Incorrect code");
+  }
+
+  mfaCodes.delete(clinicianId);
+  res.send({ success: true });
+});
+
+app.post("/api/select-email", async (req, res) => {
+  const { clinicianId } = req.body;
 
   try {
+    const result = await db.query(
+      "SELECT email FROM clinicians WHERE id = $1",
+      [clinicianId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).send("No emails found for the specified clinician.");
+    }
+
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error("Error searching email:", err);
+    res.status(500).json({ exists: false });
+  }
+});
+
+
+app.post("/api/login", async (req, res) => {
+  const { firstName, lastName, password, institution } = req.body;
+
+  try {
+    const hash = await hashPassword(password);
+    console.log("Hash generado:", hash);
+
     const clinician = await db.query(
-      `SELECT id FROM clinicians WHERE first_name = $1 AND last_name = $2`,
-      [firstName, lastName]
+      `SELECT id FROM clinicians WHERE first_name = $1 AND last_name = $2 AND password = $3`,
+      [firstName, lastName, hash]
     );
 
     if (clinician.rows.length === 0) {
@@ -783,8 +874,6 @@ app.post("/api/login", async (req, res) => {
     );
 
     if (link.rows.length > 0) {
-      console.log(`Sending: ${JSON.stringify({ success: true, clinicianId, firstName, lastName })}`);
-
       res.status(200).send({
         success: true,
         clinicianId,
@@ -799,6 +888,35 @@ app.post("/api/login", async (req, res) => {
     res.status(500).send("Server error during login.");
   }
 });
+
+app.post("/api/loginUser", async (req, res) => {
+  const { email, password } = req.body;
+
+  const hash = await hashPassword(password);
+  console.log("Hash generado:", hash);
+
+  try {
+    const user = await db.query(
+      `SELECT id FROM up_users WHERE email = $1 and password = $2`,
+      [email, hash]
+    );
+
+    if (user.rows.length === 0) {
+      return res.status(400).send("Invalid credentials.");
+    }
+
+    const userId = user.rows[0].id;
+
+    res.status(200).send({
+      success: true,
+      userId,
+    });
+  } catch (error) {
+    console.error("Error during user login:", error);
+    res.status(500).send("Server error during user login.");
+  }
+});
+
 
 app.post("/api/clinician-user-ids", async (req, res) => {
   const { clinicianId } = req.body;
@@ -863,6 +981,87 @@ app.post("/api/clinician-user-details", async (req, res) => {
   } catch (error) {
     console.error("Error fetching user details for clinician:", error);
     res.status(500).send("Server error while fetching user details.");
+  }
+});
+
+app.post("/api/user-details", async (req, res) => {
+  const { userId } = req.body;
+
+  if (!userId) {
+    return res.status(400).send("User ID is required.");
+  }
+
+  try {
+    const result = await db.query(
+      `SELECT 
+         uu.id AS user_id,
+         uu.full_name AS user_name,
+         inst.name AS clinic_name,
+         COALESCE(cl.first_name || ' ' || cl.last_name, 'No Clinician') AS clinician_name
+       FROM 
+         up_users uu
+       LEFT JOIN 
+         up_users_clinician_links ucl ON uu.id = ucl.user_id
+       LEFT JOIN 
+         clinicians cl ON ucl.clinician_id = cl.id
+       LEFT JOIN 
+         clinicians_institution_links cil ON cl.id = cil.clinician_id
+       LEFT JOIN 
+         institutions inst ON cil.institution_id = inst.id
+       WHERE 
+         uu.id = $1`,
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).send("User not found.");
+    }
+
+    res.status(200).json(result.rows[0]);
+  } catch (error) {
+    console.error("Error fetching user details:", error);
+    res.status(500).send("Server error while fetching user details.");
+  }
+});
+
+app.post("/api/change-password", async (req, res) => {
+  const { userId, currentPassword, newPassword, userType } = req.body;
+  console.log(userId, currentPassword, newPassword, userType);
+
+  if (!userId || !currentPassword || !newPassword || !userType) {
+    return res.status(400).json({ error: "Missing required fields." });
+  }
+
+  const table = userType === "user" ? "up_users" : "clinicians";
+
+  try {
+    const userResult = await db.query(
+      `SELECT password FROM ${table} WHERE id = $1`,
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: "User not found." });
+    }
+    const hashedPassword = userResult.rows[0].password;
+    const currentPasswordHash = await hashPassword(currentPassword);
+    const isMatch = (currentPasswordHash === hashedPassword);
+
+    if (!isMatch) {
+      return res.status(401).json({ error: "Current password is incorrect." });
+    }
+
+    const newHashedPassword = await hashPassword(newPassword);
+
+    await db.query(
+      `UPDATE ${table} SET password = $1 WHERE id = $2`,
+      [newHashedPassword, userId]
+    );
+
+    res.status(200).json({ message: "Password changed successfully." });
+  } catch (error) {
+    console.error("Error changing password:", error);
+    res.status(500).json({ error: "Server error while changing password." });
   }
 });
 

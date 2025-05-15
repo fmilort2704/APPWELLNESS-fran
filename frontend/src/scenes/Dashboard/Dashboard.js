@@ -705,6 +705,7 @@ export const Dashboard = () => {
   const [selectedQuestion, setSelectedQuestion] = useState(null);
   const [selectedQuestionId, setSelectedQuestionId] = useState(null);
   const location = useLocation();
+  const userType = location.state?.userType;
   const [selectedTheme, setSelectedTheme] = useState(dark);
   const [userData, setUserData] = useState({
     name: "",
@@ -989,6 +990,7 @@ export const Dashboard = () => {
           filterMode={filterMode}
           startDate={startDate}
           endDate={endDate}
+          userType={userType}
         />
         <DashboardBody
           filterMode={filterMode}

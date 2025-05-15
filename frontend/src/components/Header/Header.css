@@ -44,3 +44,43 @@
     margin-right: 50px;
     color: black;
   }
+
+  .MuiDialog-paper {
+  border-radius: 14px !important;
+  padding: 0.5em 0.5em 1em 0.5em !important;
+  box-shadow: 0 8px 32px rgba(25, 118, 210, 0.10) !important;
+}
+
+.MuiDialogTitle-root {
+  font-weight: bold !important;
+  color: #1A1C24 !important;
+  font-size: 1.2em !important;
+  letter-spacing: 0.5px;
+}
+
+.MuiDialogContent-root {
+  padding-top: 0.5em !important;
+}
+
+.MuiTextField-root {
+  margin-bottom: 1em !important;
+}
+
+.MuiButton-root {
+  background: #1976d2 !important;
+  color: #fff !important;
+}
+
+.MuiButton-root:hover {
+  background: #1565c0 !important;
+}
+
+.MuiFormHelperText-root.Mui-error {
+  color: #d32f2f !important;
+  font-weight: 500;
+}
+
+.MuiDialogContent-root .MuiTextField-root {
+  width: 100%;
+  display: block;
+}

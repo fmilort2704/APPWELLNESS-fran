@@ -603,6 +603,7 @@ function PatientSearchBar({
 export function PatSelect() {
   const [data, setData] = useState([]);
   const location = useLocation();
+  const userType = location.state?.userType;
   const [institutionName, setInstitutionName] = useState("");
   const [clinicianId, setClinicianId] = useState(null);
   const [fullName, setFullName] = useState("");
@@ -709,6 +710,7 @@ export function PatSelect() {
           selectedTheme={selectedTheme}
           setSelectedTheme={setSelectedTheme}
           institutionName={institutionName}
+          userType={userType}
         />
         <div className="PatSelect-Body">
           <CardRow
