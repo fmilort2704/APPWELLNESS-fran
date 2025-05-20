@@ -662,7 +662,7 @@ function DashboardBody({
                       width: "30%",
                     }}
                   >
-                    <StatsBox style={{ backgroundColor: selectedTheme.colors.overviewbackground }}>
+                    <StatsBox>
                       <PatientList
                         clinicianId={localStorage.getItem("clinicianId")}
                         selectedQuestionId={selectedQuestionId}

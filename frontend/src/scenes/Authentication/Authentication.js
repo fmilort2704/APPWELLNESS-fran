@@ -142,7 +142,7 @@ const AuthPage = () => {
                 }}
                 onClick={() => setUserType("user")}
               >
-                User
+                Patient
               </button>
               <button
                 className="full-width-button"

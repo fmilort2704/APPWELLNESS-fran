@@ -2,12 +2,21 @@ const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
 const fs = require("fs");
+const { Pool } = require("pg");
 const csvParser = require("csv-parser");
 const { ConnectingAirportsOutlined } = require("@mui/icons-material");
 const bcrypt = require('bcrypt');
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const mfaCodes = new Map();
+
+const pool = new Pool({
+  user: "postgres",
+  host: "localhost", 
+  database: "copia_active",
+  password: "veloz3000", 
+  port: 5432, 
+});
 
 require("dotenv").config();
 
@@ -20,7 +29,6 @@ const STRAPI_API_URL = "localhost:1337";
 console.log("server is running on port " + port);
 
 app.use(cors());
-app.use(express.json());
 app.use(express.json());
 
 let dailyActivity = [];
@@ -132,7 +140,7 @@ app.get("/api/clinicians/:id/up_users", async (req, res) => {
   const { id } = req.params;
 
   try {
-    const result = await db.query(`
+    const result = await pool.query(`
       SELECT up_users.id, up_users.username 
       FROM up_users 
       JOIN up_users_clinician_links 
@@ -161,7 +169,7 @@ join garmin_daily_datas_user_links on garmin_daily_datas.id = garmin_daily_datas
 join up_users on up_users.id = garmin_daily_datas_user_links.user_id where up_users.id = $1
     `;
 
-    const result = await db.query(query, [id]);
+    const result = await pool.query(query, [id]);
     console.log("Query result:", result.rows);
 
     res.json(result.rows);
@@ -179,7 +187,7 @@ FROM public.components_survey_answers
 ORDER BY question, id ASC;
     `;
 
-    const result = await db.query(query);
+    const result = await pool.query(query);
     console.log("Query result:", result.rows);
 
     res.json(result.rows);
@@ -194,7 +202,7 @@ app.get("/api/patients/:patientId/:questionId/answers", async (req, res) => {
   const question_id = req.params.questionId;
 
   try {
-    const result = await db.query(`
+    const result = await pool.query(`
       SELECT 
     csa.question,
     caa.answer
@@ -222,7 +230,7 @@ app.get("/api/patients/:patientId/answers_14_days", async (req, res) => {
   const patientId = req.params.patientId;
 
   try {
-    const result = await db.query(`
+    const result = await pool.query(`
     SELECT 
     aul.user_id,
     csa.id,
@@ -243,8 +251,6 @@ ORDER BY
     csa.id ASC
     `, [patientId]);
 
-    console.log("Query result 14 dias: " + result.rows);
-
     res.json(result.rows)
   } catch (e) {
     console.error("Error getting the last 14 answers: ", e)
@@ -257,7 +263,7 @@ app.get("/api/patients/:patientId/:surveyId/answers_14_days", async (req, res) =
   const surveyId = req.params.surveyId;
 
   try {
-    const result = await db.query(`
+    const result = await pool.query(`
       SELECT
 	  csal.survey_id,
 	  s.title,
@@ -295,7 +301,7 @@ app.get("/api/question_options/:patientId", async (req, res) => {
   const patientId = req.params.patientId;
 
   try {
-    const result = await db.query(`
+    const result = await pool.query(`
       SELECT DISTINCT ON (caa.answer)
     csa.id,
     csa.question,
@@ -318,11 +324,56 @@ ORDER BY caa.answer asc
   }
 });
 
+app.post('/api/is_range_dependent', async (req, res) => {
+  const { question } = req.body;
+
+  try {
+    const result = await pool.query(`
+      SELECT * FROM public.components_survey_ranges where question = $1`, [question]);
+    res.json(result.rows)
+    console.log(question)
+    console.log("Query result:", result.rows);
+  } catch (e) {
+    console.error("Error getting the questions", e);
+    res.status(500).json({ error: "Error getting the questions" })
+  }
+});
+
+app.post('/api/is_options_dependent', async (req, res) => {
+  const { question } = req.body;
+
+  try {
+    const result = await pool.query(`
+      SELECT * FROM public.components_survey_checkboxes where question = $1`, [question]);
+    res.json(result.rows)
+    console.log(question)
+    console.log("Query result:", result.rows);
+  } catch (e) {
+    console.error("Error getting the questions", e);
+    res.status(500).json({ error: "Error getting the questions" })
+  }
+});
+
+app.post('/api/is_textfield_dependent', async (req, res) => {
+  const { question } = req.body;
+
+  try {
+    const result = await pool.query(`
+      SELECT * FROM public.components_survey_questions where question = $1`, [question]);
+    res.json(result.rows)
+    console.log(question)
+    console.log("Query result:", result.rows);
+  } catch (e) {
+    console.error("Error getting the questions", e);
+    res.status(500).json({ error: "Error getting the questions" })
+  }
+});
+
 app.get("/api/question_checkboxes/:patientId", async (req, res) => {
   const patientId = req.params.patientId;
 
   try {
-    const result = await db.query(`
+    const result = await pool.query(`
 SELECT DISTINCT ON (csa.question)
     csa.id,
     csa.question,
@@ -349,7 +400,7 @@ app.get("/api/question_answers/:questionId", async (req, res) => {
   const questionId = req.params.questionId;
 
   try {
-    const result = await db.query(`
+    const result = await pool.query(`
       select csal.answer_id, caa.answer
 from component_survey_answer_link csal
 join components_answer_answers caa on csal.answer_id = caa.id
@@ -366,7 +417,7 @@ app.get("/api/badgeData/:id/up_users", async (req, res) => {
   const { id } = req.params;
 
   try {
-    const result = await db.query(`
+    const result = await pool.query(`
       SELECT up_users.id, up_users.full_name, up_users.email, groups_users_links.group_id, groups.title, up_users.photo
       FROM up_users 
       JOIN up_users_clinician_links 
@@ -393,7 +444,7 @@ app.get("/api/weekly_data/:id/:start_date/:end_date", async (req, res) => {
   const { id, start_date, end_date } = req.params;
 
   try {
-    const result = await db.query(`
+    const result = await pool.query(`
       SELECT uu.id, fdd.* 
 FROM fitbit_daily_datas fdd
 JOIN fitbit_daily_datas_user_links fddul ON fdd.id = fddul.fitbit_daily_data_id
@@ -413,7 +464,7 @@ WHERE uu.id = $1
 
 app.get("/api/all-user-details", async (req, res) => {
   try {
-    const result = await db.query(
+    const result = await pool.query(
       `SELECT 
          uu.id AS user_id,
          uu.full_name AS user_name,
@@ -719,7 +770,7 @@ app.get("/api/user_ids", (req, res) => {
 
 app.get("/api/institutions", async (req, res) => {
   try {
-    const institution_rows = await db.query(`SELECT id, name FROM institutions`);
+    const institution_rows = await pool.query(`SELECT id, name FROM institutions`);
     console.log("Query result:", institution_rows.rows);
 
     res.json(institution_rows.rows);
@@ -734,7 +785,7 @@ app.post("/api/signup", async (req, res) => {
   const { firstName, lastName, institution } = req.body;
 
   try {
-    const existingClinician = await db.query(
+    const existingClinician = await pool.query(
       `SELECT id FROM clinicians WHERE first_name = $1 AND last_name = $2`,
       [firstName, lastName]
     );
@@ -743,7 +794,7 @@ app.post("/api/signup", async (req, res) => {
       return res.status(400).send("Clinician already exists.");
     }
 
-    const existingInstitution = await db.query(
+    const existingInstitution = await pool.query(
       `SELECT id FROM institutions WHERE name = $1`,
       [institution]
     );
@@ -795,7 +846,7 @@ app.post("/api/signup", async (req, res) => {
 });
 
 async function hashPassword(password) {
-  const salt = "$2a$10$1234567890123456789012";
+  const salt = process.env.CONST_SALT;
   return await bcrypt.hash(password, salt);
 }
 
@@ -846,7 +897,7 @@ app.post("/api/select-email", async (req, res) => {
   const { clinicianId } = req.body;
 
   try {
-    const result = await db.query(
+    const result = await pool.query(
       "SELECT email FROM clinicians WHERE id = $1",
       [clinicianId]
     );
@@ -870,7 +921,7 @@ app.post("/api/login", async (req, res) => {
     const hash = await hashPassword(password);
     console.log("Hash generado:", hash);
 
-    const clinician = await db.query(
+    const clinician = await pool.query(
       `SELECT id FROM clinicians WHERE first_name = $1 AND last_name = $2 AND password = $3`,
       [firstName, lastName, hash]
     );
@@ -881,7 +932,7 @@ app.post("/api/login", async (req, res) => {
 
     const clinicianId = clinician.rows[0].id;
 
-    const institutionEntry = await db.query(
+    const institutionEntry = await pool.query(
       `SELECT id FROM institutions WHERE name = $1`,
       [institution]
     );
@@ -892,7 +943,7 @@ app.post("/api/login", async (req, res) => {
 
     const institutionId = institutionEntry.rows[0].id;
 
-    const link = await db.query(
+    const link = await pool.query(
       `SELECT * FROM clinicians_institution_links WHERE clinician_id = $1 AND institution_id = $2`,
       [clinicianId, institutionId]
     );
@@ -920,7 +971,7 @@ app.post("/api/loginUser", async (req, res) => {
   console.log("Hash generado:", hash);
 
   try {
-    const user = await db.query(
+    const user = await pool.query(
       `SELECT id FROM up_users WHERE email = $1 and password = $2`,
       [email, hash]
     );
@@ -950,7 +1001,7 @@ app.post("/api/clinician-user-ids", async (req, res) => {
   }
 
   try {
-    const result = await db.query(
+    const result = await pool.query(
       `SELECT user_id FROM up_users_clinician_links WHERE clinician_id = $1`,
       [clinicianId]
     );
@@ -976,7 +1027,7 @@ app.post("/api/clinician-user-details", async (req, res) => {
   }
 
   try {
-    const result = await db.query(
+    const result = await pool.query(
       `SELECT 
          uu.id AS user_id,
          uu.full_name AS user_name,
@@ -1016,7 +1067,7 @@ app.post("/api/user-details", async (req, res) => {
   }
 
   try {
-    const result = await db.query(
+    const result = await pool.query(
       `SELECT 
          uu.id AS user_id,
          uu.full_name AS user_name,
@@ -1059,7 +1110,7 @@ app.post("/api/change-password", async (req, res) => {
   const table = userType === "user" ? "up_users" : "clinicians";
 
   try {
-    const userResult = await db.query(
+    const userResult = await pool.query(
       `SELECT password FROM ${table} WHERE id = $1`,
       [userId]
     );
@@ -1077,7 +1128,7 @@ app.post("/api/change-password", async (req, res) => {
 
     const newHashedPassword = await hashPassword(newPassword);
 
-    await db.query(
+    await pool.query(
       `UPDATE ${table} SET password = $1 WHERE id = $2`,
       [newHashedPassword, userId]
     );

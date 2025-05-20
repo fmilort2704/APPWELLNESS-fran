@@ -28,14 +28,14 @@ const HeartRateBar = ({ minAvg, maxAvg }) => {
         data: [maxAvg, minAvg],
         backgroundColor: ["#0F65FA", "#FF0F00"],
         borderRadius: 10,
-        barThickness: 25,
+        barThickness: 15,
       },
     ],
   };
 
   const options = {
     responsive: true,
-    indexAxis: "y", 
+    indexAxis: "y",
     maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
@@ -48,19 +48,35 @@ const HeartRateBar = ({ minAvg, maxAvg }) => {
           display: true,
           text: "BPM",
         },
+        ticks: {
+          font: {
+            size: 12,
+          },
+        },
       },
       y: {
         ticks: {
           font: {
-            size: 14,
+            size: 12,
           },
         },
       },
     },
   };
 
+  // Ajusta el tamaño del contenedor para que la gráfica no se salga
   return (
-    <div style={{ height: "100%", width: "100%" }}>
+    <div style={{
+      width: "100%",
+      maxWidth: "275px",
+      height: "108px",
+      margin: "0 auto",
+      padding: 0,
+      boxSizing: "border-box",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
+    }}>
       <Bar data={data} options={options} />
     </div>
   );

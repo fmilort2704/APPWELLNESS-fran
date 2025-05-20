@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { OverviewCard } from "../styles/DashboardComponents.styled";
 
-export const PatientList = ({ clinicianId, selectedQuestionId, selectedPatient, }) => {
+export const PatientList = ({
+  clinicianId,
+  selectedQuestionId,
+  selectedPatient,
+  selectedQuestionText // <-- Añade este prop para mostrar el texto de la pregunta
+}) => {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [patientResponses, setPatientResponses] = useState([]);
@@ -10,7 +16,6 @@ export const PatientList = ({ clinicianId, selectedQuestionId, selectedPatient, 
   useEffect(() => {
     const fetchPatients = async () => {
       try {
-        console.log("Fetching patients for clinician:", clinicianId);
         const response = await fetch(
           `http://localhost:5001/api/clinicians/${clinicianId}/up_users`
         );
@@ -36,7 +41,6 @@ export const PatientList = ({ clinicianId, selectedQuestionId, selectedPatient, 
           `http://localhost:5001/api/patients/${selectedPatient}/${selectedQuestionId}/answers`
         );
         const data = await response.json();
-        console.log("Respuestas actualizadas para la pregunta seleccionada:", data);
         setPatientResponses(data);
       } catch (e) {
         console.error("Error al obtener respuestas para la pregunta seleccionada:", e);
@@ -53,32 +57,40 @@ export const PatientList = ({ clinicianId, selectedQuestionId, selectedPatient, 
   }
 
   return (
-    <div>
-      <h3>Last entries</h3>
-
-      {responsesLoading ? (
-        <div>Loading responses...</div>
-      ) : selectedPatient && patientResponses.length > 0 ? (
-        <div>
-          <h4>Responses for Patient {selectedPatient}</h4>
-          <ul>
-            {patientResponses.map((response, index) => (
-              <li key={index}>
-                <div style={{ fontSize: "1.25rem" }}>
-                  <strong>Question: {response.question.split("0 =")[0]}</strong>
-                </div>
-                <div style={{ fontSize: "1rem" }}>Answer: {response.answer}</div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : !selectedQuestionId ? (
-        <div>Please select a question to view responses.</div>
-      ) : selectedPatient ? (
-        <div>No responses available for this patient.</div>
-      ) : null}
-    </div>
-  );
+  responsesLoading ? (
+    <div>Loading responses...</div>
+  ) : selectedPatient && patientResponses.length > 0 ? (
+    <OverviewCard
+      style={{
+        height: "auto",
+        display: "block",
+        margin: ".4rem",
+        padding: "1em",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.7)",
+      }}
+    >
+      <h2 style={{
+        fontSize: ".8em",
+        marginBottom: "1em",
+        width: "100%",
+        textAlign: "left"
+      }}>
+        {patientResponses[0].question.split("0 =")[0]}
+      </h2>
+      <ul>
+        {patientResponses.map((response, index) => (
+          <li key={index} style={{ fontSize: "0.5em" , textAlign: "left"}}>
+            {response.answer}
+          </li>
+        ))}
+      </ul>
+    </OverviewCard>
+  ) : !selectedQuestionId ? (
+    <div>Please select a question to view responses.</div>
+  ) : selectedPatient ? (
+    <div>No responses available for this patient.</div>
+  ) : null
+);
 };
 
 export default PatientList;
